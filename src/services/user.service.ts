@@ -1,21 +1,6 @@
 import bcrypt from 'bcryptjs';
 import prisma from '../utils/database';
-import { UserRole } from '../common/types';
-import { PaginationParams } from '../common/types';
-
-interface CreateUserData {
-  email: string;
-  password: string;
-  name: string;
-  role: UserRole;
-}
-
-interface UpdateUserData {
-  email?: string;
-  name?: string;
-  role?: UserRole;
-  isActive?: boolean;
-}
+import { CreateUserData, PaginationParams, UpdateUserData } from '../common/types';
 
 export class UserService {
   async getAllUsers(pagination: PaginationParams) {

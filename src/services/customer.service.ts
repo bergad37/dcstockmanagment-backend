@@ -1,19 +1,5 @@
+import { CreateCustomerData, UpdateCustomerData } from '../common/types';
 import prisma from '../utils/database';
-
-interface CreateCustomerData {
-  name: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-}
-
-interface UpdateCustomerData {
-  name?: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-}
-
 export class CustomerService {
   async getAllCustomers(skip: number, take: number) {
     const [customers, total] = await Promise.all([

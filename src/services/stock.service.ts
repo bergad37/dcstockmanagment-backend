@@ -1,10 +1,5 @@
+import { UpdateStockData } from '../common/types';
 import prisma from '../utils/database';
-
-interface UpdateStockData {
-  totalQuantity?: number;
-  availableQuantity?: number;
-  itemCount?: number;
-}
 
 export class StockService {
   async getAllStock(skip: number, take: number) {

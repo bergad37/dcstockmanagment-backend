@@ -10,28 +10,20 @@ import transactionRoutes from './transaction.routes';
 
 const router: Router = Router();
 
-// Authentication routes
 router.use('/auth', authRoutes);
 
-// User management
 router.use('/users', userRoutes);
 
-// Product management
 router.use('/products', productRoutes);
 
-// Category management
 router.use('/categories', categoryRoutes);
 
-// Supplier management
 router.use('/suppliers', supplierRoutes);
 
-// Customer management
 router.use('/customers', customerRoutes);
 
-// Stock/Inventory management
 router.use('/stock', stockRoutes);
 
-// Transaction management
 router.use('/transactions', transactionRoutes);
 
 export default router;

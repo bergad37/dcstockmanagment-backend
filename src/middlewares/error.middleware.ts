@@ -10,8 +10,6 @@ export class ErrorMiddleware {
   }
 
   static handle(error: Error, _req: Request, res: Response): void {
-    console.error('Error:', error);
-
     res.status(500).json({
       success: false,
       message: 'Internal server error',

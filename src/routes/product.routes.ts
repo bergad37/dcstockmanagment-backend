@@ -9,15 +9,12 @@ import {
 
 const router: Router = Router();
 const controller = new ProductController();
-
-// Get all products
 router.get(
   '/',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   (req: Request, res: Response) => controller.getAllProducts(req, res),
 );
 
-// Get product by ID
 router.get(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),

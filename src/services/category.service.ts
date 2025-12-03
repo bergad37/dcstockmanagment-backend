@@ -1,12 +1,5 @@
+import { CreateCategoryData, UpdateCategoryData } from '../common/types';
 import prisma from '../utils/database';
-
-interface CreateCategoryData {
-  name: string;
-}
-
-interface UpdateCategoryData {
-  name?: string;
-}
 
 export class CategoryService {
   async getAllCategories() {

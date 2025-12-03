@@ -1,30 +1,7 @@
+import { CreateTransactionData, UpdateTransactionData } from '../common/types';
 import prisma from '../utils/database';
-import { TransactionType } from '../common/types';
 
-interface CreateTransactionData {
-  customerId?: number;
-  type: TransactionType;
-  totalAmount: number;
-  totalCost: number;
-  profitLoss: number;
-  items: Array<{
-    productId: number;
-    quantity: number;
-    costPrice: number;
-    sellingPrice: number;
-    subtotalCost: number;
-    subtotalRevenue: number;
-    profitLoss: number;
-  }>;
-}
 
-interface UpdateTransactionData {
-  customerId?: number;
-  type?: TransactionType;
-  totalAmount?: number;
-  totalCost?: number;
-  profitLoss?: number;
-}
 
 export class TransactionService {
   async getAllTransactions(skip: number, take: number) {

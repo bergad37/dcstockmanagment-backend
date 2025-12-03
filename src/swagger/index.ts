@@ -8,14 +8,6 @@ export const swaggerDocument = {
     version: '1.0.0',
     description:
       'Comprehensive REST API for managing stock, inventory, transactions, customers, and suppliers. Built with Node.js, TypeScript, Express, Prisma, and PostgreSQL.',
-    contact: {
-      name: 'API Support',
-      email: 'support@stockmanagement.com',
-    },
-    license: {
-      name: 'ISC',
-      url: 'https://opensource.org/licenses/ISC',
-    },
   },
   servers: [
     {

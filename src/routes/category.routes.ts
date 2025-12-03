@@ -10,21 +10,18 @@ import {
 const router: Router = Router();
 const controller = new CategoryController();
 
-// Get all categories
 router.get(
   '/',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   (req: Request, res: Response) => controller.getAllCategories(req, res)
 );
 
-// Get category by ID
 router.get(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   (req: Request, res: Response) => controller.getCategoryById(req, res)
 );
 
-// Create category
 router.post(
   '/',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
@@ -33,7 +30,6 @@ router.post(
   (req: Request, res: Response) => controller.createCategory(req, res)
 );
 
-// Update category
 router.put(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
@@ -42,7 +38,6 @@ router.put(
   (req: Request, res: Response) => controller.updateCategory(req, res)
 );
 
-// Delete category
 router.delete(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),

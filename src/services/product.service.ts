@@ -1,23 +1,5 @@
+import { CreateProductData, UpdateProductData } from '../common/types';
 import prisma from '../utils/database';
-
-interface CreateProductData {
-  categoryId: number;
-  supplierId?: number;
-  name: string;
-  type?: string;
-  costPrice: number;
-  sellingPrice: number;
-}
-
-interface UpdateProductData {
-  categoryId?: number;
-  supplierId?: number;
-  name?: string;
-  type?: string;
-  costPrice?: number;
-  sellingPrice?: number;
-}
-
 export class ProductService {
   async getAllProducts(skip: number, take: number) {
     const [products, total] = await Promise.all([

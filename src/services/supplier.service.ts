@@ -1,16 +1,6 @@
+import { CreateSupplierData, UpdateSupplierData } from '../common/types';
 import prisma from '../utils/database';
 
-interface CreateSupplierData {
-  name: string;
-  phone?: string;
-  email?: string;
-}
-
-interface UpdateSupplierData {
-  name?: string;
-  phone?: string;
-  email?: string;
-}
 
 export class SupplierService {
   async getAllSuppliers(skip: number, take: number) {

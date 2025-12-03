@@ -1,19 +1,9 @@
 import bcrypt from 'bcryptjs';
 import prisma from '../utils/database';
 import { JwtUtil } from '../utils/jwt';
-import { UserRole } from '../common/types';
+import { LoginData, RegisterData, UserRole } from '../common/types';
 
-interface RegisterData {
-  email: string;
-  password: string;
-  name: string;
-  role?: UserRole;
-}
 
-interface LoginData {
-  email: string;
-  password: string;
-}
 
 export class AuthService {
   async register(data: RegisterData) {
@@ -27,30 +17,14 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    const user = await prisma.user.create({
+    return prisma.user.create({
       data: {
         email: data.email,
         password: hashedPassword,
         name: data.name,
         role: data.role || UserRole.STAFF,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-      },
+      }
     });
-
-    const token = JwtUtil.generateToken({
-      id: user.id,
-      email: user.email,
-      role: user.role as UserRole,
-    });
-
-    return { user, token };
   }
 
   async login(data: LoginData) {
@@ -86,15 +60,6 @@ export class AuthService {
   async getProfile(userId: number) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
 
     if (!user) {
