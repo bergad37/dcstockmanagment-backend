@@ -1,7 +1,6 @@
 import { CreateSupplierData, UpdateSupplierData } from '../common/types';
 import prisma from '../utils/database';
 
-
 export class SupplierService {
   async getAllSuppliers(skip: number, take: number) {
     const [suppliers, total] = await Promise.all([

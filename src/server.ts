@@ -22,10 +22,10 @@ const startServer = async (): Promise<void> => {
       console.log(`   - Swagger UI: http://localhost:${PORT}/api-docs`);
     });
   } catch (error) {
+    console.error(error);
     process.exit(1);
   }
 };
-
 
 const gracefulShutdown = async (signal: string): Promise<void> => {
   console.log(`\n${signal} received. Closing gracefully...`);
@@ -36,6 +36,7 @@ const gracefulShutdown = async (signal: string): Promise<void> => {
     }
     process.exit(0);
   } catch (error) {
+    console.error(error);
     process.exit(1);
   }
 };

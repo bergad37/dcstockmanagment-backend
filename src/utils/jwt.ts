@@ -1,8 +1,9 @@
 import jwt from 'jsonwebtoken';
+import type { Secret, SignOptions } from 'jsonwebtoken';
 import { UserRole } from '../common/types';
 
 interface JwtPayload {
-  id: number;
+  id:string;
   email: string;
   role: UserRole;
 }
@@ -13,10 +14,13 @@ export class JwtUtil {
   private static readonly expiresIn: string = process.env.JWT_EXPIRE || '7d';
 
   static generateToken(payload: JwtPayload): string {
-    return jwt.sign(payload, this.secret, {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-      expiresIn: this.expiresIn as any,
-    });
+    return jwt.sign(
+      payload,
+      this.secret as Secret,
+      {
+        expiresIn: this.expiresIn,
+      } as SignOptions
+    );
   }
 
   static verifyToken(token: string): JwtPayload {

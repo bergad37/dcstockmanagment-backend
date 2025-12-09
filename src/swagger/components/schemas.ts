@@ -203,6 +203,108 @@ export const schemas = {
     },
   },
 
+  Product: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', description: 'Product ID (UUID)' },
+      categoryId: { type: 'string' },
+      supplierId: { type: 'string', nullable: true },
+      name: { type: 'string' },
+      type: { type: 'string', enum: ['ITEM', 'QUANTITY'] },
+      serialNumber: { type: 'string', nullable: true },
+      warranty: { type: 'string', nullable: true },
+      description: { type: 'string', nullable: true },
+      costPrice: { type: 'string', format: 'decimal', nullable: true },
+      entryDate: { type: 'string', format: 'date-time' },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time' },
+    },
+  },
+
+  CreateProductInput: {
+    type: 'object',
+    required: ['categoryId', 'name', 'type', 'quantity'],
+    properties: {
+      categoryId: { type: 'string' },
+      supplierId: { type: 'string' },
+      name: { type: 'string' },
+      type: { type: 'string', enum: ['ITEM', 'QUANTITY'] },
+      quantity: { type: 'integer' },
+      serialNumber: { type: 'string' },
+      warranty: { type: 'string' },
+      description: { type: 'string' },
+      costPrice: { type: 'number' },
+    },
+  },
+
+  UpdateProductInput: {
+    type: 'object',
+    properties: {
+      categoryId: { type: 'string' },
+      supplierId: { type: 'string' },
+      name: { type: 'string' },
+      type: { type: 'string', enum: ['ITEM', 'QUANTITY'] },
+      serialNumber: { type: 'string' },
+      warranty: { type: 'string' },
+      description: { type: 'string' },
+      costPrice: { type: 'number' },
+    },
+  },
+
+  TransactionItem: {
+    type: 'object',
+    properties: {
+      productId: { type: 'string' },
+      quantity: { type: 'integer' },
+      unitPrice: { type: 'number' },
+      unitCostPrice: { type: 'number', nullable: true },
+    },
+  },
+
+  Transaction: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      customerId: { type: 'string', nullable: true },
+      type: { type: 'string', enum: ['SOLD', 'RETURNED', 'RENT'] },
+      totalAmount: { type: 'number', nullable: true },
+      totalCost: { type: 'number', nullable: true },
+      profitLoss: { type: 'number', nullable: true },
+      startDate: { type: 'string', format: 'date-time', nullable: true },
+      returnDate: { type: 'string', format: 'date-time', nullable: true },
+      createdAt: { type: 'string', format: 'date-time' },
+      items: { type: 'array', items: { $ref: '#/components/schemas/TransactionItem' } },
+    },
+  },
+
+  CreateTransactionInput: {
+    type: 'object',
+    required: ['type', 'items'],
+    properties: {
+      customerId: { type: 'string' },
+      type: { type: 'string', enum: ['SOLD', 'RETURNED', 'RENT'] },
+      totalAmount: { type: 'number' },
+      totalCost: { type: 'number' },
+      profitLoss: { type: 'number' },
+      startDate: { type: 'string', format: 'date-time' },
+      returnDate: { type: 'string', format: 'date-time' },
+      items: { type: 'array', items: { $ref: '#/components/schemas/TransactionItem' } },
+    },
+  },
+
+  UpdateTransactionInput: {
+    type: 'object',
+    properties: {
+      customerId: { type: 'string' },
+      type: { type: 'string', enum: ['SOLD', 'RETURNED', 'RENT'] },
+      totalAmount: { type: 'number' },
+      totalCost: { type: 'number' },
+      profitLoss: { type: 'number' },
+      startDate: { type: 'string', format: 'date-time' },
+      returnDate: { type: 'string', format: 'date-time' },
+    },
+  },
+
   PaginationMeta: {
     type: 'object',
     properties: {
