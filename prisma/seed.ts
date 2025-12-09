@@ -51,52 +51,7 @@ async function main() {
   console.log('✅ Created staff user:', staff.email);
 
   // Create product categories
-  const laptopCategory = await prisma.productCategory.upsert({
-    where: { name: 'Laptops' },
-    update: {},
-    create: { name: 'Laptops' },
-  });
-
-  const riceCategory = await prisma.productCategory.upsert({
-    where: { name: 'Rice' },
-    update: {},
-    create: { name: 'Rice' },
-  });
-
   console.log('✅ Created product categories');
-
-  // Create suppliers
-  const supplier1 = await prisma.supplier.create({
-    data: {
-      name: 'Tech Supplies Ltd',
-      phone: '+250788123456',
-      email: 'contact@techsupplies.com',
-    },
-  });
-
-  const supplier2 = await prisma.supplier.create({
-    data: {
-      name: 'Rice Importers Co',
-      phone: '+250788654321',
-      email: 'info@riceimporters.com',
-    },
-  });
-
-  console.log('✅ Created suppliers');
-
-  // Create customers
-  const customer1 = await prisma.customer.create({
-    data: {
-      name: 'John Doe',
-      phone: '+250788111222',
-      email: 'john@example.com',
-      address: 'Kigali, Rwanda',
-    },
-  });
-
-  console.log('✅ Created customers');
-
-  console.log('🎉 Seed completed successfully!');
 }
 
 main()

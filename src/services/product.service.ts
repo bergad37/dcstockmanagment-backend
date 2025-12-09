@@ -19,7 +19,7 @@ export class ProductService {
     return { products, total };
   }
 
-  async getProductById(id: number) {
+  async getProductById(id: string) {
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
@@ -43,19 +43,24 @@ export class ProductService {
         supplierId: data.supplierId,
         name: data.name,
         type: data.type,
+        serialNumber: data.serialNumber,
+        warranty: data.warranty,
+        description: data.description,
         costPrice: data.costPrice,
-        sellingPrice: data.sellingPrice,
+        createdBy: data.createdBy,
+        updatedBy: data.updatedBy,
       },
       include: {
         category: true,
         supplier: true,
+        stock: true,
       },
     });
 
     return product;
   }
 
-  async updateProduct(id: number, data: UpdateProductData) {
+  async updateProduct(id: string, data: UpdateProductData) {
     const product = await prisma.product.update({
       where: { id },
       data,
@@ -69,7 +74,53 @@ export class ProductService {
     return product;
   }
 
-  async deleteProduct(id: number) {
+  async deleteProduct(id: string) {
     await prisma.product.delete({ where: { id } });
+  }
+
+  async createProductWithStock(data: CreateProductData) {
+    const quantity = data.quantity ?? 1;
+
+    const created = await prisma.$transaction(async tx => {
+      const product = await tx.product.create({
+        data: {
+          categoryId: data.categoryId,
+          supplierId: data.supplierId,
+          name: data.name,
+          type: data.type,
+          serialNumber: data.serialNumber,
+          warranty: data.warranty,
+          description: data.description,
+          costPrice: data.costPrice,
+          createdBy: data.createdBy,
+          updatedBy: data.updatedBy,
+        },
+        include: {
+          category: true,
+          supplier: true,
+          stock: true,
+        },
+      });
+
+      // Create stock
+      await tx.stock.create({
+        data: {
+          productId: product.id,
+          quantity,
+          createdBy: data.createdBy,
+        },
+      });
+
+      return tx.product.findUnique({
+        where: { id: product.id },
+        include: {
+          category: true,
+          supplier: true,
+          stock: true,
+        },
+      });
+    });
+
+    return created;
   }
 }

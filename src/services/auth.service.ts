@@ -3,8 +3,6 @@ import prisma from '../utils/database';
 import { JwtUtil } from '../utils/jwt';
 import { LoginData, RegisterData, UserRole } from '../common/types';
 
-
-
 export class AuthService {
   async register(data: RegisterData) {
     const existingUser = await prisma.user.findUnique({
@@ -23,7 +21,7 @@ export class AuthService {
         password: hashedPassword,
         name: data.name,
         role: data.role || UserRole.STAFF,
-      }
+      },
     });
   }
 
@@ -47,7 +45,7 @@ export class AuthService {
     }
 
     const token = JwtUtil.generateToken({
-      id: user.id,
+      id: user.id as string,
       email: user.email,
       role: user.role as UserRole,
     });
@@ -57,7 +55,7 @@ export class AuthService {
     return { user: userWithoutPassword, token };
   }
 
-  async getProfile(userId: number) {
+  async getProfile(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });

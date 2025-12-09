@@ -106,7 +106,7 @@ export const productPaths = {
           name: 'id',
           required: true,
           schema: {
-            type: 'integer',
+            type: 'string',
           },
         },
       ],
@@ -137,7 +137,7 @@ export const productPaths = {
           name: 'id',
           required: true,
           schema: {
-            type: 'integer',
+            type: 'string',
           },
         },
       ],
@@ -181,7 +181,7 @@ export const productPaths = {
           name: 'id',
           required: true,
           schema: {
-            type: 'integer',
+            type: 'string',
           },
         },
       ],

@@ -6,15 +6,20 @@ export enum UserRole {
   STAFF = 'STAFF',
 }
 
+export enum ProductType {
+  ITEM = 'ITEM',
+  QUANTITY = 'QUANTITY',
+}
+
 export enum TransactionType {
-  BUY = 'BUY',
-  BORROW = 'BORROW',
-  RETURN = 'RETURN',
+  SOLD = 'SOLD',
+  RETURNED = 'RETURNED',
+  RENT = 'RENT',
 }
 
 export interface AuthRequest extends Request {
   user?: {
-    id: number;
+    id: string;
     email: string;
     role: UserRole;
   };
@@ -44,21 +49,29 @@ export interface PaginatedResponse<T> {
 }
 
 export interface CreateProductData {
-  categoryId: number;
-  supplierId?: number;
+  categoryId: string;
+  supplierId?: string;
   name: string;
-  type?: string;
-  costPrice: number;
-  sellingPrice: number;
+  type: ProductType;
+  quantity: number; // Required - added for stock creation
+  serialNumber?: string;
+  warranty?: string;
+  description?: string;
+  costPrice?: number;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface UpdateProductData {
-  categoryId?: number;
-  supplierId?: number;
+  categoryId?: string;
+  supplierId?: string;
   name?: string;
-  type?: string;
+  type?: ProductType;
+  serialNumber?: string;
+  warranty?: string;
+  description?: string;
   costPrice?: number;
-  sellingPrice?: number;
+  updatedBy?: string;
 }
 
 export interface CreateCustomerData {
@@ -109,29 +122,34 @@ export interface UpdateUserData {
   isActive?: boolean;
 }
 
+export interface TransactionItemInput {
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  unitCostPrice?: number;
+}
+
 export interface CreateTransactionData {
-  customerId?: number;
+  customerId?: string;
   type: TransactionType;
-  totalAmount: number;
-  totalCost: number;
-  profitLoss: number;
-  items: Array<{
-    productId: number;
-    quantity: number;
-    costPrice: number;
-    sellingPrice: number;
-    subtotalCost: number;
-    subtotalRevenue: number;
-    profitLoss: number;
-  }>;
+  totalAmount?: number;
+  totalCost?: number;
+  profitLoss?: number;
+  startDate?: Date;
+  returnDate?: Date;
+  items: TransactionItemInput[];
+  createdBy?: string;
 }
 
 export interface UpdateTransactionData {
-  customerId?: number;
+  customerId?: string;
   type?: TransactionType;
   totalAmount?: number;
   totalCost?: number;
   profitLoss?: number;
+  startDate?: Date;
+  returnDate?: Date;
+  updatedBy?: string;
 }
 
 export interface CreateSupplierData {
@@ -147,8 +165,5 @@ export interface UpdateSupplierData {
 }
 
 export interface UpdateStockData {
-  totalQuantity?: number;
-  availableQuantity?: number;
-  itemCount?: number;
+  quantity?: number;
 }
-

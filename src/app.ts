@@ -11,7 +11,6 @@ const app: Express = express();
 
 // CORS Configuration
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN?.split(',') || '*',
   credentials: true,
   optionsSuccessStatus: 200,
 };
