@@ -11,7 +11,7 @@ export async function getAllCategories() {
   return items;
 }
 
-export async function getCategoryById(id: number) {
+export async function getCategoryById(id: string) {
   return await base.getById(id);
 }
 
@@ -19,11 +19,11 @@ export async function createCategory(data: CreateCategoryData, ctx?: ServiceCont
   return await base.create({ name: data.name }, undefined, ctx);
 }
 
-export async function updateCategory(id: number, data: UpdateCategoryData, ctx?: ServiceContext) {
+export async function updateCategory(id: string, data: UpdateCategoryData, ctx?: ServiceContext) {
   return await base.updateById(id, data, undefined, ctx);
 }
 
-export async function deleteCategory(id: number) {
+export async function deleteCategory(id: string) {
   return await base.deleteById(id);
 }
 

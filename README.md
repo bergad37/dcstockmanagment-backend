@@ -529,12 +529,12 @@ const maxRetries = 3; // for constants
 
 ```typescript
 // ✅ Good
-async function fetchUserById(id: number): Promise<User> {}
+async function fetchUserById(id: string): Promise<User> {}
 function calculateTotalPrice(items: Item[]): number {}
 function isValidEmail(email: string): boolean {}
 
 // ❌ Avoid
-async function getUser(id: number) {} // ambiguous
+async function getUser(id: string) {} // ambiguous
 function calc(items) {} // unclear
 function valid(email) {} // unclear
 ```
@@ -590,7 +590,7 @@ try {
  * @returns Promise<User> The user object
  * @throws Error if user not found
  */
-async function getUserById(id: number): Promise<User> {
+async function getUserById(id: string): Promise<User> {
   // Implementation
 }
 ```

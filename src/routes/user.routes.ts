@@ -18,7 +18,6 @@ router.get(
   getUserById
 );
 
-// Create user - requires authentication
 router.post(
   '/',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
@@ -27,7 +26,6 @@ router.post(
   createUser
 );
 
-// Update user - requires authentication
 router.put(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
@@ -36,7 +34,6 @@ router.put(
   updateUser
 );
 
-// Delete user - requires authentication
 router.delete(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),

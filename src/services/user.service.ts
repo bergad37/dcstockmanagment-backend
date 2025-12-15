@@ -10,7 +10,7 @@ export async function getAllUsers(pagination: PaginationParams) {
   return { users: items, total };
 }
 
-export async function getUserById(id: number) {
+export async function getUserById(id: string) {
   return await base.getById(id);
 }
 
@@ -23,11 +23,11 @@ export async function createUser(data: CreateUserData, ctx?: ServiceContext) {
   return await base.create({ email: data.email, password: hashedPassword, name: data.name, role: data.role } as unknown as Record<string, unknown>, undefined, ctx);
 }
 
-export async function updateUser(id: number, data: UpdateUserData, ctx?: ServiceContext) {
+export async function updateUser(id: string, data: UpdateUserData, ctx?: ServiceContext) {
   return await base.updateById(id, data as unknown as Record<string, unknown>, undefined, ctx);
 }
 
-export async function deleteUser(id: number) {
+export async function deleteUser(id: string) {
   return await base.deleteById(id);
 }
 

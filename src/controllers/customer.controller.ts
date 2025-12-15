@@ -23,8 +23,7 @@ export const getAllCustomers = async (req: Request, res: Response) => {
 
 export const getCustomerById = async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id || '0');
-    const customer = await customerService.getCustomerById(id);
+    const customer = await customerService.getCustomerById(req.params.id!);
     return ResponseUtil.success(res, 'Customer retrieved successfully', customer);
   } catch (error) {
     return ResponseUtil.notFound(res, error instanceof Error ? error.message : 'Customer not found');
@@ -44,10 +43,10 @@ export const createCustomer = async (req: Request, res: Response) => {
 
 export const updateCustomer = async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id || '0');
+
   const authReq = req as any;
   const user = authReq.user;
-  const customer = await customerService.updateCustomer(id, req.body as UpdateCustomerData, { userId: user?.id, user } as any);
+const customer = await customerService.updateCustomer(req.params.id!, req.body as UpdateCustomerData, { userId: user?.id, user } as any);
     return ResponseUtil.success(res, 'Customer updated successfully', customer);
   } catch (error) {
     return ResponseUtil.error(res, error instanceof Error ? error.message : 'Failed to update customer');
@@ -56,8 +55,7 @@ export const updateCustomer = async (req: Request, res: Response) => {
 
 export const deleteCustomer = async (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id || '0');
-    await customerService.deleteCustomer(id);
+    await customerService.deleteCustomer(req.params.id!);
     return ResponseUtil.success(res, 'Customer deleted successfully');
   } catch (error) {
     return ResponseUtil.error(res, error instanceof Error ? error.message : 'Failed to delete customer');

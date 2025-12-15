@@ -21,7 +21,7 @@ export async function getAllCustomers(
   return { customers: items, total };
 }
 
-export async function getCustomerById(id: number) {
+export async function getCustomerById(id: string) {
   return await base.getById(id);
 }
 
@@ -29,11 +29,11 @@ export async function createCustomer(data: CreateCustomerData, ctx?: ServiceCont
   return await base.create(data as unknown as Record<string, unknown>, undefined, ctx);
 }
 
-export async function updateCustomer(id: number, data: UpdateCustomerData, ctx?: ServiceContext) {
+export async function updateCustomer(id: string, data: UpdateCustomerData, ctx?: ServiceContext) {
   return await base.updateById(id, data as unknown as Record<string, unknown>, undefined, ctx);
 }
 
-export async function deleteCustomer(id: number) {
+export async function deleteCustomer(id: string) {
   return await base.deleteById(id);
 }
 

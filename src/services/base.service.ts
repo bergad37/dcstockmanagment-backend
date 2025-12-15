@@ -48,7 +48,6 @@ export function createBaseService<
   }
 
   async function create(data: Create, include?: Include, ctx?: ServiceContext): Promise<Model> {
-    // try to inject createdBy from context when available and not already present on data
     const baseData = (data as unknown) as Record<string, unknown>;
     const finalData = { ...baseData } as Record<string, unknown>;
     if (ctx?.user?.id && finalData['createdBy'] == null) finalData['createdBy'] = ctx.user.id;

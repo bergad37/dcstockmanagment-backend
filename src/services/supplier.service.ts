@@ -21,7 +21,7 @@ export async function getAllSuppliers(
   return { suppliers: items, total };
 }
 
-export async function getSupplierById(id: number) {
+export async function getSupplierById(id: string) {
   return await base.getById(id);
 }
 
@@ -29,11 +29,11 @@ export async function createSupplier(data: CreateSupplierData, ctx?: ServiceCont
   return await base.create(data as unknown as Record<string, unknown>, undefined, ctx);
 }
 
-export async function updateSupplier(id: number, data: UpdateSupplierData, ctx?: ServiceContext) {
+export async function updateSupplier(id: string, data: UpdateSupplierData, ctx?: ServiceContext) {
   return await base.updateById(id, data as unknown as Record<string, unknown>, undefined, ctx);
 }
 
-export async function deleteSupplier(id: number) {
+export async function deleteSupplier(id: string) {
   return await base.deleteById(id);
 }
 

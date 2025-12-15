@@ -11,7 +11,7 @@ interface JwtPayload {
 export class JwtUtil {
   private static readonly secret: string =
     process.env.JWT_SECRET || 'default-secret';
-  private static readonly expiresIn: string = process.env.JWT_EXPIRE || '7d';
+  private static readonly expiresIn: string = process.env.JWT_EXPIRES_IN || '4h';
 
   static generateToken(payload: JwtPayload): string {
     return jwt.sign(
