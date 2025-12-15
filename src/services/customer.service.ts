@@ -1,4 +1,4 @@
-import { CreateCustomerData, UpdateCustomerData } from '../common/types';
+import { CreateCustomerData, UpdateCustomerData, ServiceContext } from '../common/types';
 import prisma from '../utils/database';
 import { createBaseService } from './base.service';
 
@@ -25,11 +25,11 @@ export async function getCustomerById(id: number) {
   return await base.getById(id);
 }
 
-export async function createCustomer(data: CreateCustomerData, ctx?: { userId?: string }) {
+export async function createCustomer(data: CreateCustomerData, ctx?: ServiceContext) {
   return await base.create(data as unknown as Record<string, unknown>, undefined, ctx);
 }
 
-export async function updateCustomer(id: number, data: UpdateCustomerData, ctx?: { userId?: string }) {
+export async function updateCustomer(id: number, data: UpdateCustomerData, ctx?: ServiceContext) {
   return await base.updateById(id, data as unknown as Record<string, unknown>, undefined, ctx);
 }
 

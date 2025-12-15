@@ -38,6 +38,14 @@ export interface PaginationParams {
   skip: number;
 }
 
+export interface ServiceContext {
+  user?: {
+    id: string;
+    email?: string;
+    role?: UserRole;
+  };
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   pagination: {

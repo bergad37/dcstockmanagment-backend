@@ -1,4 +1,4 @@
-import { CreateProductData, UpdateProductData } from '../common/types';
+import { CreateProductData, UpdateProductData, ServiceContext } from '../common/types';
 import prisma from '../utils/database';
 import { createBaseService } from './base.service';
 
@@ -40,11 +40,11 @@ export async function getProductById(id: string) {
   return await base.getById(id);
 }
 
-export async function createProduct(data: CreateProductData, ctx?: { userId?: string }) {
+export async function createProduct(data: CreateProductData, ctx?: ServiceContext) {
   return await base.create(data as unknown as Record<string, unknown>, undefined, ctx);
 }
 
-export async function updateProduct(id: string, data: UpdateProductData, ctx?: { userId?: string }) {
+export async function updateProduct(id: string, data: UpdateProductData, ctx?: ServiceContext) {
   return await base.updateById(id, data as unknown as Record<string, unknown>, undefined, ctx);
 }
 
@@ -52,12 +52,12 @@ export async function deleteProduct(id: string) {
   return await base.deleteById(id);
 }
 
-export async function createProductWithStock(data: CreateProductData, ctx?: { userId?: string }) {
+export async function createProductWithStock(data: CreateProductData, ctx?: ServiceContext) {
   const quantity = data.quantity ?? 1;
 
   const created = await prisma.$transaction(async tx => {
-    const createdBy = data.createdBy ?? ctx?.userId;
-    const updatedBy = data.updatedBy ?? ctx?.userId;
+  const createdBy = data.createdBy ?? ctx?.user?.id;
+  const updatedBy = data.updatedBy ?? ctx?.user?.id;
 
     // Build product create payload and only include optional supplierId when provided
     const productCreateData: any = {

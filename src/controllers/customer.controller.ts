@@ -34,8 +34,8 @@ export const getCustomerById = async (req: Request, res: Response) => {
 export const createCustomer = async (req: Request, res: Response) => {
   try {
     const authReq = req as any;
-    const userId = authReq.user?.id;
-    const customer = await customerService.createCustomer(req.body as CreateCustomerData, { userId });
+    const user = authReq.user;
+    const customer = await customerService.createCustomer(req.body as CreateCustomerData, { userId: user?.id, user } as any);
     return ResponseUtil.created(res, 'Customer created successfully', customer);
   } catch (error) {
     return ResponseUtil.error(res, error instanceof Error ? error.message : 'Failed to create customer');
@@ -46,8 +46,8 @@ export const updateCustomer = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id || '0');
   const authReq = req as any;
-  const userId = authReq.user?.id;
-  const customer = await customerService.updateCustomer(id, req.body as UpdateCustomerData, { userId });
+  const user = authReq.user;
+  const customer = await customerService.updateCustomer(id, req.body as UpdateCustomerData, { userId: user?.id, user } as any);
     return ResponseUtil.success(res, 'Customer updated successfully', customer);
   } catch (error) {
     return ResponseUtil.error(res, error instanceof Error ? error.message : 'Failed to update customer');

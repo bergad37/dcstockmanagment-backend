@@ -1,4 +1,4 @@
-import { CreateTransactionData, UpdateTransactionData } from '../common/types';
+import { CreateTransactionData, UpdateTransactionData, ServiceContext } from '../common/types';
 import prisma from '../utils/database';
 import { Decimal } from '@prisma/client/runtime/library';
 import { createBaseService } from './base.service';
@@ -61,7 +61,7 @@ export async function getTransactionById(id: string) {
   return transaction;
 }
 
-export async function createTransaction(data: CreateTransactionData, ctx?: { userId?: string }) {
+export async function createTransaction(data: CreateTransactionData, ctx?: ServiceContext) {
   const transaction = await prisma.transaction.create({
     data: {
       customerId: data.customerId,
@@ -71,7 +71,7 @@ export async function createTransaction(data: CreateTransactionData, ctx?: { use
       profitLoss: data.profitLoss !== undefined ? new Decimal(String(data.profitLoss)) : null,
       startDate: data.startDate,
       returnDate: data.returnDate,
-      createdBy: data.createdBy ?? ctx?.userId,
+  createdBy: data.createdBy ?? ctx?.user?.id,
       items: {
         create: data.items.map(item => ({
           productId: item.productId,
@@ -94,7 +94,7 @@ export async function createTransaction(data: CreateTransactionData, ctx?: { use
   return transaction;
 }
 
-export async function createTransactionWithStock(data: CreateTransactionData, ctx?: { userId?: string }) {
+export async function createTransactionWithStock(data: CreateTransactionData, ctx?: ServiceContext) {
   const needsStock = data.type === 'RENT' || data.type === 'SOLD';
   const productIds = data.items.map(i => i.productId);
 
@@ -110,7 +110,7 @@ export async function createTransactionWithStock(data: CreateTransactionData, ct
   }
 
   const created = await prisma.$transaction(async tx => {
-    const createdBy = data.createdBy ?? ctx?.userId;
+  const createdBy = data.createdBy ?? ctx?.user?.id;
     const createdTx = await tx.transaction.create({
       data: {
         customerId: data.customerId,
@@ -139,7 +139,7 @@ export async function createTransactionWithStock(data: CreateTransactionData, ct
   return created;
 }
 
-export async function updateTransaction(id: string, data: UpdateTransactionData) {
+export async function updateTransaction(id: string, data: UpdateTransactionData, ctx?: ServiceContext) {
   const transaction = await prisma.transaction.update({
     where: { id },
     data: {
@@ -150,7 +150,7 @@ export async function updateTransaction(id: string, data: UpdateTransactionData)
       profitLoss: data.profitLoss !== undefined ? new Decimal(String(data.profitLoss)) : undefined,
       startDate: data.startDate,
       returnDate: data.returnDate,
-      updatedBy: data.updatedBy,
+      updatedBy: data.updatedBy ?? ctx?.user?.id,
     },
     include: {
       customer: true,
@@ -165,7 +165,7 @@ export async function updateTransaction(id: string, data: UpdateTransactionData)
   return transaction;
 }
 
-export async function updateTransactionWithStockAdjustments(id: string, data: UpdateTransactionData) {
+export async function updateTransactionWithStockAdjustments(id: string, data: UpdateTransactionData, ctx?: ServiceContext) {
   const existing = await getTransactionWithItems(id);
   if (!existing) throw new Error('Transaction not found');
 
@@ -176,7 +176,7 @@ export async function updateTransactionWithStockAdjustments(id: string, data: Up
       for (const it of existing.items) {
         await tx.stock.update({ where: { productId: it.productId }, data: { quantity: { increment: it.quantity } } });
       }
-      await tx.transaction.update({ where: { id }, data: { ...data } });
+      await tx.transaction.update({ where: { id }, data: { ...data, updatedBy: data.updatedBy ?? ctx?.user?.id } });
     });
     return getTransactionById(id);
   }
@@ -195,7 +195,7 @@ export async function updateTransactionWithStockAdjustments(id: string, data: Up
         const s = stockMap.get(it.productId)!;
         await tx.stock.update({ where: { id: s.id }, data: { quantity: { decrement: it.quantity } } });
       }
-      await tx.transaction.update({ where: { id }, data: { ...data } });
+      await tx.transaction.update({ where: { id }, data: { ...data, updatedBy: data.updatedBy ?? ctx?.user?.id } });
     });
 
     return getTransactionById(id);

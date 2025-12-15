@@ -54,6 +54,8 @@ export const getTransactionById = async (req: Request, res: Response) => {
 
 export const createTransaction = async (req: Request, res: Response) => {
   try {
+    const authReq = req as any;
+      const user = authReq.user;
     const body = req.body;
     const type = normalizeType(body.type);
     if (!type) return ResponseUtil.error(res, 'Invalid transaction type');
@@ -68,11 +70,11 @@ export const createTransaction = async (req: Request, res: Response) => {
       profitLoss: body.profitLoss,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       returnDate: body.returnDate ? new Date(body.returnDate) : undefined,
-      createdBy: body.createdBy,
+        createdBy: body.createdBy ?? user?.id,
       items: body.items,
     };
 
-    const result = await transactionService.createTransactionWithStock(data);
+      const result = await transactionService.createTransactionWithStock(data, { userId: user?.id, user } as any);
     return ResponseUtil.created(res, 'Created', result);
   } catch {
     return ResponseUtil.error(res, 'Create failed');
@@ -83,6 +85,8 @@ export const updateTransaction = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     const body = req.body;
+    const authReq = req as any;
+    const user = authReq.user;
 
     const existing = await transactionService.getTransactionWithItems(id!);
     if (!existing) return ResponseUtil.notFound(res, 'Not found');
@@ -97,7 +101,10 @@ export const updateTransaction = async (req: Request, res: Response) => {
       returnDate: body.returnDate ? new Date(body.returnDate) : undefined,
     };
 
-    const updated = await transactionService.updateTransactionWithStockAdjustments(id!, data);
+    // attach updatedBy from authenticated user when available
+      if (user) (data as any).updatedBy = user.id;
+
+      const updated = await transactionService.updateTransactionWithStockAdjustments(id!, data, { userId: user?.id, user } as any);
     return ResponseUtil.success(res, 'Updated', updated);
   } catch {
     return ResponseUtil.error(res, 'Update failed');

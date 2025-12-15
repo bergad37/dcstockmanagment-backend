@@ -26,7 +26,9 @@ export const getCategoryById = async (req: Request, res: Response) => {
 
 export const createCategory = async (req: Request, res: Response) => {
   try {
-  const category = await categoryService.createCategory(req.body as CreateCategoryData);
+  const authReq = req as any;
+  const user = authReq.user;
+  const category = await categoryService.createCategory(req.body as CreateCategoryData, { userId: user?.id, user } as any);
     return ResponseUtil.created(res, 'Category created successfully', category);
   } catch (error) {
     return ResponseUtil.error(res, error instanceof Error ? error.message : 'Failed to create category');
@@ -36,7 +38,9 @@ export const createCategory = async (req: Request, res: Response) => {
 export const updateCategory = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id || '0');
-  const category = await categoryService.updateCategory(id, req.body as UpdateCategoryData);
+  const authReq = req as any;
+  const user = authReq.user;
+  const category = await categoryService.updateCategory(id, req.body as UpdateCategoryData, { userId: user?.id, user } as any);
     return ResponseUtil.success(res, 'Category updated successfully', category);
   } catch (error) {
     return ResponseUtil.error(res, error instanceof Error ? error.message : 'Failed to update category');

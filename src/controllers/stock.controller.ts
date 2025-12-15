@@ -50,8 +50,8 @@ export const updateStock = async (req: Request, res: Response) => {
   try {
     const id = req.params.id!;
     const authReq = req as any;
-    const userId = authReq.user?.id;
-    const stock = await stockService.updateStock(id, req.body as UpdateStockData, { userId });
+    const user = authReq.user;
+    const stock = await stockService.updateStock(id, req.body as UpdateStockData, { userId: user?.id, user } as any);
     return ResponseUtil.success(res, 'Stock updated successfully', stock);
   } catch (error) {
     return ResponseUtil.error(res, error instanceof Error ? error.message : 'Failed to update stock');

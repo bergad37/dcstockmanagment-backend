@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import prisma from '../utils/database';
-import { CreateUserData, PaginationParams, UpdateUserData } from '../common/types';
+import { CreateUserData, PaginationParams, UpdateUserData, ServiceContext } from '../common/types';
 import { createBaseService } from './base.service';
 
 const base = createBaseService(prisma.user, { idField: 'id' });
@@ -14,7 +14,7 @@ export async function getUserById(id: number) {
   return await base.getById(id);
 }
 
-export async function createUser(data: CreateUserData, ctx?: { userId?: string }) {
+export async function createUser(data: CreateUserData, ctx?: ServiceContext) {
   const existingUser = await prisma.user.findUnique({ where: { email: data.email } });
   if (existingUser) throw new Error('User already exists');
 
@@ -23,7 +23,7 @@ export async function createUser(data: CreateUserData, ctx?: { userId?: string }
   return await base.create({ email: data.email, password: hashedPassword, name: data.name, role: data.role } as unknown as Record<string, unknown>, undefined, ctx);
 }
 
-export async function updateUser(id: number, data: UpdateUserData, ctx?: { userId?: string }) {
+export async function updateUser(id: number, data: UpdateUserData, ctx?: ServiceContext) {
   return await base.updateById(id, data as unknown as Record<string, unknown>, undefined, ctx);
 }
 

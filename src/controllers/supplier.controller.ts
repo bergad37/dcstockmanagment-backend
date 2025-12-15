@@ -34,8 +34,8 @@ export const getSupplierById = async (req: Request, res: Response) => {
 export const createSupplier = async (req: Request, res: Response) => {
   try {
   const authReq = req as any;
-  const userId = authReq.user?.id;
-  const supplier = await supplierService.createSupplier(req.body as CreateSupplierData, { userId });
+  const user = authReq.user;
+  const supplier = await supplierService.createSupplier(req.body as CreateSupplierData, { userId: user?.id, user } as any);
     return ResponseUtil.created(res, 'Supplier created successfully', supplier);
   } catch (error) {
     return ResponseUtil.error(res, error instanceof Error ? error.message : 'Failed to create supplier');
@@ -46,8 +46,8 @@ export const updateSupplier = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id || '0');
   const authReq = req as any;
-  const userId = authReq.user?.id;
-  const supplier = await supplierService.updateSupplier(id, req.body as UpdateSupplierData, { userId });
+  const user = authReq.user;
+  const supplier = await supplierService.updateSupplier(id, req.body as UpdateSupplierData, { userId: user?.id, user } as any);
     return ResponseUtil.success(res, 'Supplier updated successfully', supplier);
   } catch (error) {
     return ResponseUtil.error(res, error instanceof Error ? error.message : 'Failed to update supplier');

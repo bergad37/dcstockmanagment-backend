@@ -59,7 +59,7 @@ export const getProductById = async (req: Request, res: Response) => {
 export const createProduct = async (req: Request, res: Response) => {
   try {
     const authReq = req as AuthRequest;
-    const userId = authReq.user?.id;
+    const user = authReq.user;
     const body = req.body as CreateProductData;
     const type: ProductType = body.type;
     let quantity: number = body.quantity ?? 1;
@@ -77,10 +77,10 @@ export const createProduct = async (req: Request, res: Response) => {
       description: body.description,
       costPrice: body.costPrice,
       quantity,
-      createdBy: userId,
+  createdBy: user?.id,
     };
 
-  const productWithStock = await productService.createProductWithStock(createData, { userId });
+  const productWithStock = await productService.createProductWithStock(createData, { userId: user?.id, user } as any);
 
     return ResponseUtil.created(res, 'Product created successfully', productWithStock);
   } catch (error) {
@@ -95,13 +95,13 @@ export const updateProduct = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id || '');
     if (!id) return ResponseUtil.error(res, 'Product id is required');
-    const authReq = req as AuthRequest;
-    const userId = authReq.user?.id;
+  const authReq = req as AuthRequest;
+  const user = authReq.user;
 
     const updateData = { ...(req.body as UpdateProductData) } as UpdateProductData;
-    if (userId) updateData.updatedBy = userId;
+    if (user) updateData.updatedBy = user.id;
 
-  const product = await productService.updateProduct(id, updateData, { userId });
+  const product = await productService.updateProduct(id, updateData, { userId: user?.id, user } as any);
     return ResponseUtil.success(res, 'Product updated successfully', product);
   } catch (error) {
     return ResponseUtil.error(

@@ -1,4 +1,4 @@
-import { UpdateStockData } from '../common/types';
+import { UpdateStockData, ServiceContext } from '../common/types';
 import prisma from '../utils/database';
 import { createBaseService } from './base.service';
 
@@ -40,7 +40,7 @@ export async function getStockByProductId(productId: string) {
   return stock;
 }
 
-export async function updateStock(id: string, data: UpdateStockData, ctx?: { userId?: string }) {
+export async function updateStock(id: string, data: UpdateStockData, ctx?: ServiceContext) {
   return await base.updateById(id, data as unknown as Record<string, unknown>, undefined, ctx);
 }
 

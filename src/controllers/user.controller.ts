@@ -30,8 +30,10 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const createUser = async (req: Request, res: Response) => {
   try {
-  const user = await userService.createUser(req.body as CreateUserData);
-    return ResponseUtil.created(res, 'User created successfully', user);
+  const authReq = req as any;
+  const user = authReq.user;
+  const newUser = await userService.createUser(req.body as CreateUserData, { userId: user?.id, user } as any);
+    return ResponseUtil.created(res, 'User created successfully', newUser);
   } catch (error) {
     return ResponseUtil.error(res, error instanceof Error ? error.message : 'Failed to create user');
   }
@@ -40,8 +42,10 @@ export const createUser = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id || '0');
-  const user = await userService.updateUser(id, req.body as UpdateUserData);
-    return ResponseUtil.success(res, 'User updated successfully', user);
+  const authReq = req as any;
+  const user = authReq.user;
+  const updated = await userService.updateUser(id, req.body as UpdateUserData, { userId: user?.id, user } as any);
+    return ResponseUtil.success(res, 'User updated successfully', updated);
   } catch (error) {
     return ResponseUtil.error(res, error instanceof Error ? error.message : 'Failed to update user');
   }

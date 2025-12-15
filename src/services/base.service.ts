@@ -1,5 +1,6 @@
 import prisma from '../utils/database';
 import type { PrismaClient } from '@prisma/client';
+import type { ServiceContext } from '../common/types';
 
 type DelegateShape = {
   findMany(args?: unknown): Promise<unknown[]>;
@@ -14,7 +15,7 @@ type DelegateShape = {
  * Functional factory for a BaseService-like API.
  * Returns an object with CRUD helpers bound to the provided delegate.
  */
-type ServiceContext = { userId?: string };
+// Use shared ServiceContext imported from common types
 
 export function createBaseService<
   D extends DelegateShape,
@@ -50,7 +51,7 @@ export function createBaseService<
     // try to inject createdBy from context when available and not already present on data
     const baseData = (data as unknown) as Record<string, unknown>;
     const finalData = { ...baseData } as Record<string, unknown>;
-    if (ctx?.userId && finalData['createdBy'] == null) finalData['createdBy'] = ctx.userId;
+    if (ctx?.user?.id && finalData['createdBy'] == null) finalData['createdBy'] = ctx.user.id;
 
     return await (delegate as unknown as { create(args?: unknown): Promise<Model> }).create({ data: finalData, include: include ?? defaultInclude } as unknown);
   }
@@ -59,7 +60,7 @@ export function createBaseService<
     const where = { [idField]: id } as unknown;
     const baseData = (data as unknown) as Record<string, unknown>;
     const finalData = { ...baseData } as Record<string, unknown>;
-    if (ctx?.userId && finalData['updatedBy'] == null) finalData['updatedBy'] = ctx.userId;
+    if (ctx?.user?.id && finalData['updatedBy'] == null) finalData['updatedBy'] = ctx.user.id;
 
     return await (delegate as unknown as { update(args?: unknown): Promise<Model> }).update({ where, data: finalData, include: include ?? defaultInclude } as unknown);
   }
