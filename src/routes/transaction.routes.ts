@@ -1,5 +1,5 @@
-import { Router, Request, Response } from 'express';
-import { TransactionController } from '../controllers/transaction.controller';
+import { Router } from 'express';
+import { getAllTransactions, getTransactionById, createTransaction, updateTransaction, deleteTransaction } from '../controllers/transaction.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { ValidationMiddleware } from '../middlewares/validation.middleware';
 import {
@@ -8,45 +8,34 @@ import {
 } from '../validations/transaction.validation';
 
 const router: Router = Router();
-const controller = new TransactionController();
+router.get('/', AuthMiddleware.authenticate.bind(AuthMiddleware), getAllTransactions);
 
-// Get all transactions
-router.get(
-  '/',
-  AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => controller.getAllTransactions(req, res)
-);
-
-// Get transaction by ID
 router.get(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => controller.getTransactionById(req, res)
+  getTransactionById
 );
 
-// Create transaction (buy/borrow/return)
 router.post(
   '/',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   createTransactionValidation,
   ValidationMiddleware.handle.bind(ValidationMiddleware),
-  (req: Request, res: Response) => controller.createTransaction(req, res)
+  createTransaction
 );
 
-// Update transaction
 router.put(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   updateTransactionValidation,
   ValidationMiddleware.handle.bind(ValidationMiddleware),
-  (req: Request, res: Response) => controller.updateTransaction(req, res)
+  updateTransaction
 );
 
-// Delete transaction
 router.delete(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => controller.deleteTransaction(req, res)
+  deleteTransaction
 );
 
 export default router;

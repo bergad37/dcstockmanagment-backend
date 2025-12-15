@@ -30,6 +30,10 @@ export const productPaths = {
           },
           description: 'Items per page',
         },
+        { in: 'query', name: 'searchKey', schema: { type: 'string' }, description: 'Search product name (contains, case-insensitive)', example: 'phone' },
+        { in: 'query', name: 'categoryId', schema: { type: 'string' }, description: 'Filter by category id', example: '5' },
+        { in: 'query', name: 'startDate', schema: { type: 'string', format: 'date' }, description: 'Start date (YYYY-MM-DD)', example: '2025-01-01' },
+        { in: 'query', name: 'endDate', schema: { type: 'string', format: 'date' }, description: 'End date (YYYY-MM-DD)', example: '2025-12-31' },
       ],
       responses: {
         '200': {

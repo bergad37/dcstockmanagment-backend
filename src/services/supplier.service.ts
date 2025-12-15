@@ -1,62 +1,40 @@
 import { CreateSupplierData, UpdateSupplierData } from '../common/types';
 import prisma from '../utils/database';
+import { createBaseService } from './base.service';
 
-export class SupplierService {
-  async getAllSuppliers(skip: number, take: number) {
-    const [suppliers, total] = await Promise.all([
-      prisma.supplier.findMany({
-        skip,
-        take,
-        include: {
-          products: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.supplier.count(),
-    ]);
+const supplierInclude = { products: true };
 
-    return { suppliers, total };
+const base = createBaseService(prisma.supplier, { idField: 'id', defaultInclude: supplierInclude });
+
+export async function getAllSuppliers(
+  skip: number,
+  take: number,
+  conditions?: { searchKey?: string }
+) {
+  const where: any = {};
+  const searchKey = conditions?.searchKey;
+  if (searchKey) {
+    where.name = { contains: String(searchKey), mode: 'insensitive' };
   }
 
-  async getSupplierById(id: number) {
-    const supplier = await prisma.supplier.findUnique({
-      where: { id },
-      include: {
-        products: true,
-      },
-    });
-
-    if (!supplier) {
-      throw new Error('Supplier not found');
-    }
-
-    return supplier;
-  }
-
-  async createSupplier(data: CreateSupplierData) {
-    const supplier = await prisma.supplier.create({
-      data,
-      include: {
-        products: true,
-      },
-    });
-
-    return supplier;
-  }
-
-  async updateSupplier(id: number, data: UpdateSupplierData) {
-    const supplier = await prisma.supplier.update({
-      where: { id },
-      data,
-      include: {
-        products: true,
-      },
-    });
-
-    return supplier;
-  }
-
-  async deleteSupplier(id: number) {
-    await prisma.supplier.delete({ where: { id } });
-  }
+  const { items, total } = await base.list({ skip, take, where: Object.keys(where).length ? where : undefined, orderBy: { createdAt: 'desc' } });
+  return { suppliers: items, total };
 }
+
+export async function getSupplierById(id: number) {
+  return await base.getById(id);
+}
+
+export async function createSupplier(data: CreateSupplierData, ctx?: { userId?: string }) {
+  return await base.create(data as unknown as Record<string, unknown>, undefined, ctx);
+}
+
+export async function updateSupplier(id: number, data: UpdateSupplierData, ctx?: { userId?: string }) {
+  return await base.updateById(id, data as unknown as Record<string, unknown>, undefined, ctx);
+}
+
+export async function deleteSupplier(id: number) {
+  return await base.deleteById(id);
+}
+
+export default { getAllSuppliers, getSupplierById, createSupplier, updateSupplier, deleteSupplier };

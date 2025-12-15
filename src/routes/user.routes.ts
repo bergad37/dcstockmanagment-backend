@@ -1,5 +1,5 @@
-import { Router, Request, Response } from 'express';
-import { UserController } from '../controllers/user.controller';
+import { Router } from 'express';
+import { getAllUsers, getUserById, createUser, updateUser, deleteUser } from '../controllers/user.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { ValidationMiddleware } from '../middlewares/validation.middleware';
 import {
@@ -8,20 +8,14 @@ import {
 } from '../validations/user.validation';
 
 const router: Router = Router();
-const userController = new UserController();
-
 // Get all users - requires authentication
-router.get(
-  '/',
-  AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => userController.getAllUsers(req, res)
-);
+router.get('/', AuthMiddleware.authenticate.bind(AuthMiddleware), getAllUsers);
 
 // Get user by ID - requires authentication
 router.get(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => userController.getUserById(req, res)
+  getUserById
 );
 
 // Create user - requires authentication
@@ -30,7 +24,7 @@ router.post(
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   createUserValidation,
   ValidationMiddleware.handle.bind(ValidationMiddleware),
-  (req: Request, res: Response) => userController.createUser(req, res)
+  createUser
 );
 
 // Update user - requires authentication
@@ -39,14 +33,14 @@ router.put(
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   updateUserValidation,
   ValidationMiddleware.handle.bind(ValidationMiddleware),
-  (req: Request, res: Response) => userController.updateUser(req, res)
+  updateUser
 );
 
 // Delete user - requires authentication
 router.delete(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => userController.deleteUser(req, res)
+  deleteUser
 );
 
 export default router;
