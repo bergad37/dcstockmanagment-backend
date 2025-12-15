@@ -1,5 +1,5 @@
-import { Router, Request, Response } from 'express';
-import { SupplierController } from '../controllers/supplier.controller';
+import { Router } from 'express';
+import { getAllSuppliers, getSupplierById, createSupplier, updateSupplier, deleteSupplier } from '../controllers/supplier.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { ValidationMiddleware } from '../middlewares/validation.middleware';
 import {
@@ -8,20 +8,14 @@ import {
 } from '../validations/supplier.validation';
 
 const router: Router = Router();
-const controller = new SupplierController();
-
 // Get all suppliers
-router.get(
-  '/',
-  AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => controller.getAllSuppliers(req, res)
-);
+router.get('/', AuthMiddleware.authenticate.bind(AuthMiddleware), getAllSuppliers);
 
 // Get supplier by ID
 router.get(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => controller.getSupplierById(req, res)
+  getSupplierById
 );
 
 // Create supplier
@@ -30,7 +24,7 @@ router.post(
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   createSupplierValidation,
   ValidationMiddleware.handle.bind(ValidationMiddleware),
-  (req: Request, res: Response) => controller.createSupplier(req, res)
+  createSupplier
 );
 
 // Update supplier
@@ -39,14 +33,14 @@ router.put(
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   updateSupplierValidation,
   ValidationMiddleware.handle.bind(ValidationMiddleware),
-  (req: Request, res: Response) => controller.updateSupplier(req, res)
+  updateSupplier
 );
 
 // Delete supplier
 router.delete(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => controller.deleteSupplier(req, res)
+  deleteSupplier
 );
 
 export default router;

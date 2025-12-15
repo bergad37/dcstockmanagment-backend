@@ -1,5 +1,5 @@
-import { Router, Request, Response } from 'express';
-import { CustomerController } from '../controllers/customer.controller';
+import { Router } from 'express';
+import { getAllCustomers, getCustomerById, createCustomer, updateCustomer, deleteCustomer } from '../controllers/customer.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { ValidationMiddleware } from '../middlewares/validation.middleware';
 import {
@@ -8,18 +8,12 @@ import {
 } from '../validations/customer.validation';
 
 const router: Router = Router();
-const controller = new CustomerController();
-
-router.get(
-  '/',
-  AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => controller.getAllCustomers(req, res)
-);
+router.get('/', AuthMiddleware.authenticate.bind(AuthMiddleware), getAllCustomers);
 
 router.get(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => controller.getCustomerById(req, res)
+  getCustomerById
 );
 
 router.post(
@@ -27,7 +21,7 @@ router.post(
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   createCustomerValidation,
   ValidationMiddleware.handle.bind(ValidationMiddleware),
-  (req: Request, res: Response) => controller.createCustomer(req, res)
+  createCustomer
 );
 
 router.put(
@@ -35,13 +29,13 @@ router.put(
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   updateCustomerValidation,
   ValidationMiddleware.handle.bind(ValidationMiddleware),
-  (req: Request, res: Response) => controller.updateCustomer(req, res)
+  updateCustomer
 );
 
 router.delete(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => controller.deleteCustomer(req, res)
+  deleteCustomer
 );
 
 export default router;

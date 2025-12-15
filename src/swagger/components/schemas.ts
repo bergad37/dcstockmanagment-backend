@@ -221,6 +221,40 @@ export const schemas = {
     },
   },
 
+  Customer: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      name: { type: 'string' },
+      phone: { type: 'string', nullable: true },
+      email: { type: 'string', format: 'email', nullable: true },
+      address: { type: 'string', nullable: true },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time' },
+    },
+  },
+
+  CreateCustomerInput: {
+    type: 'object',
+    required: ['name'],
+    properties: {
+      name: { type: 'string' },
+      phone: { type: 'string' },
+      email: { type: 'string', format: 'email' },
+      address: { type: 'string' },
+    },
+  },
+
+  UpdateCustomerInput: {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      phone: { type: 'string' },
+      email: { type: 'string', format: 'email' },
+      address: { type: 'string' },
+    },
+  },
+
   CreateProductInput: {
     type: 'object',
     required: ['categoryId', 'name', 'type', 'quantity'],
@@ -305,6 +339,56 @@ export const schemas = {
     },
   },
 
+  Stock: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      productId: { type: 'string' },
+      quantity: { type: 'integer' },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time' },
+      product: { $ref: '#/components/schemas/Product' },
+    },
+  },
+
+  Supplier: {
+    type: 'object',
+    properties: {
+      id: { type: 'integer' },
+      name: { type: 'string' },
+      phone: { type: 'string', nullable: true },
+      email: { type: 'string', format: 'email', nullable: true },
+      createdAt: { type: 'string', format: 'date-time' },
+      updatedAt: { type: 'string', format: 'date-time' },
+    },
+  },
+
+  CreateSupplierInput: {
+    type: 'object',
+    required: ['name'],
+    properties: {
+      name: { type: 'string' },
+      phone: { type: 'string' },
+      email: { type: 'string', format: 'email' },
+    },
+  },
+
+  UpdateSupplierInput: {
+    type: 'object',
+    properties: {
+      name: { type: 'string' },
+      phone: { type: 'string' },
+      email: { type: 'string', format: 'email' },
+    },
+  },
+
+  UpdateStockInput: {
+    type: 'object',
+    properties: {
+      quantity: { type: 'integer' },
+    },
+  },
+
   PaginationMeta: {
     type: 'object',
     properties: {
@@ -354,6 +438,36 @@ export const schemas = {
           pagination: {
             $ref: '#/components/schemas/PaginationMeta',
           },
+        },
+      },
+    },
+  },
+
+  CustomersListResponse: {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean', example: true },
+      message: { type: 'string', example: 'Customers retrieved successfully' },
+      data: {
+        type: 'object',
+        properties: {
+          customers: { type: 'array', items: { $ref: '#/components/schemas/Customer' } },
+          pagination: { $ref: '#/components/schemas/PaginationMeta' },
+        },
+      },
+    },
+  },
+
+  SuppliersListResponse: {
+    type: 'object',
+    properties: {
+      success: { type: 'boolean', example: true },
+      message: { type: 'string', example: 'Suppliers retrieved successfully' },
+      data: {
+        type: 'object',
+        properties: {
+          suppliers: { type: 'array', items: { $ref: '#/components/schemas/Supplier' } },
+          pagination: { $ref: '#/components/schemas/PaginationMeta' },
         },
       },
     },

@@ -1,5 +1,5 @@
-import { Router, Request, Response } from 'express';
-import { ProductController } from '../controllers/product.controller';
+import { Router } from 'express';
+import { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct } from '../controllers/product.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { ValidationMiddleware } from '../middlewares/validation.middleware';
 import {
@@ -8,17 +8,12 @@ import {
 } from '../validations/product.validation';
 
 const router: Router = Router();
-const controller = new ProductController();
-router.get(
-  '/',
-  AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => controller.getAllProducts(req, res)
-);
+router.get('/', AuthMiddleware.authenticate.bind(AuthMiddleware), getAllProducts);
 
 router.get(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => controller.getProductById(req, res)
+  getProductById
 );
 
 router.post(
@@ -26,7 +21,7 @@ router.post(
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   createProductValidation,
   ValidationMiddleware.handle.bind(ValidationMiddleware),
-  (req: Request, res: Response) => controller.createProduct(req, res)
+  createProduct
 );
 
 router.put(
@@ -34,13 +29,13 @@ router.put(
   AuthMiddleware.authenticate.bind(AuthMiddleware),
   updateProductValidation,
   ValidationMiddleware.handle.bind(ValidationMiddleware),
-  (req: Request, res: Response) => controller.updateProduct(req, res)
+  updateProduct
 );
 
 router.delete(
   '/:id',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
-  (req: Request, res: Response) => controller.deleteProduct(req, res)
+  deleteProduct
 );
 
 export default router;

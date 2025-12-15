@@ -1,59 +1,30 @@
-import { CreateCategoryData, UpdateCategoryData } from '../common/types';
+import { CreateCategoryData, UpdateCategoryData, ServiceContext } from '../common/types';
 import prisma from '../utils/database';
+import { createBaseService } from './base.service';
 
-export class CategoryService {
-  async getAllCategories() {
-    const categories = await prisma.productCategory.findMany({
-      include: {
-        products: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+const categoryInclude = { products: true };
 
-    return categories;
-  }
+const base = createBaseService(prisma.productCategory, { idField: 'id', defaultInclude: categoryInclude });
 
-  async getCategoryById(id: number) {
-    const category = await prisma.productCategory.findUnique({
-      where: { id },
-      include: {
-        products: true,
-      },
-    });
-
-    if (!category) {
-      throw new Error('Category not found');
-    }
-
-    return category;
-  }
-
-  async createCategory(data: CreateCategoryData) {
-    const category = await prisma.productCategory.create({
-      data: {
-        name: data.name,
-      },
-      include: {
-        products: true,
-      },
-    });
-
-    return category;
-  }
-
-  async updateCategory(id: number, data: UpdateCategoryData) {
-    const category = await prisma.productCategory.update({
-      where: { id },
-      data,
-      include: {
-        products: true,
-      },
-    });
-
-    return category;
-  }
-
-  async deleteCategory(id: number) {
-    await prisma.productCategory.delete({ where: { id } });
-  }
+export async function getAllCategories() {
+  const { items } = await base.list({ orderBy: { createdAt: 'desc' } });
+  return items;
 }
+
+export async function getCategoryById(id: number) {
+  return await base.getById(id);
+}
+
+export async function createCategory(data: CreateCategoryData, ctx?: ServiceContext) {
+  return await base.create({ name: data.name }, undefined, ctx);
+}
+
+export async function updateCategory(id: number, data: UpdateCategoryData, ctx?: ServiceContext) {
+  return await base.updateById(id, data, undefined, ctx);
+}
+
+export async function deleteCategory(id: number) {
+  return await base.deleteById(id);
+}
+
+export default { getAllCategories, getCategoryById, createCategory, updateCategory, deleteCategory };

@@ -10,7 +10,19 @@ export class AuthMiddleware {
     next: NextFunction
   ): Response | void {
     try {
-      const token = req.headers.authorization?.split(' ')[1];
+      // Accept: "Bearer <token>", bare token, or x-access-token header
+      const authHeader = req.headers.authorization;
+      let token: string | undefined;
+
+      if (authHeader) {
+        const parts = String(authHeader).split(' ');
+        token = parts.length > 1 ? parts[1] : parts[0];
+      }
+
+      if (!token) {
+        const alt = req.headers['x-access-token'];
+        if (typeof alt === 'string') token = alt;
+      }
 
       if (!token) {
         return ResponseUtil.unauthorized(res, 'No token provided');
@@ -19,7 +31,10 @@ export class AuthMiddleware {
       const decoded = JwtUtil.verifyToken(token);
       req.user = decoded;
       next();
-    } catch {
+    } catch (err) {
+      // Log the error for debugging (do not leak sensitive data)
+      // eslint-disable-next-line no-console
+      console.error('AuthMiddleware.verifyToken error:', err instanceof Error ? err.message : String(err));
       return ResponseUtil.unauthorized(res, 'Invalid or expired token');
     }
   }

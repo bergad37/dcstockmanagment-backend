@@ -1,61 +1,40 @@
-import { CreateCustomerData, UpdateCustomerData } from '../common/types';
+import { CreateCustomerData, UpdateCustomerData, ServiceContext } from '../common/types';
 import prisma from '../utils/database';
-export class CustomerService {
-  async getAllCustomers(skip: number, take: number) {
-    const [customers, total] = await Promise.all([
-      prisma.customer.findMany({
-        skip,
-        take,
-        include: {
-          transactions: true,
-        },
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.customer.count(),
-    ]);
+import { createBaseService } from './base.service';
 
-    return { customers, total };
+const customerInclude = { transactions: true };
+
+const base = createBaseService(prisma.customer, { idField: 'id', defaultInclude: customerInclude });
+
+export async function getAllCustomers(
+  skip: number,
+  take: number,
+  conditions?: { searchKey?: string }
+) {
+  const where: any = {};
+  const searchKey = conditions?.searchKey;
+  if (searchKey) {
+    where.name = { contains: String(searchKey), mode: 'insensitive' };
   }
 
-  async getCustomerById(id: number) {
-    const customer = await prisma.customer.findUnique({
-      where: { id },
-      include: {
-        transactions: true,
-      },
-    });
-
-    if (!customer) {
-      throw new Error('Customer not found');
-    }
-
-    return customer;
-  }
-
-  async createCustomer(data: CreateCustomerData) {
-    const customer = await prisma.customer.create({
-      data,
-      include: {
-        transactions: true,
-      },
-    });
-
-    return customer;
-  }
-
-  async updateCustomer(id: number, data: UpdateCustomerData) {
-    const customer = await prisma.customer.update({
-      where: { id },
-      data,
-      include: {
-        transactions: true,
-      },
-    });
-
-    return customer;
-  }
-
-  async deleteCustomer(id: number) {
-    await prisma.customer.delete({ where: { id } });
-  }
+  const { items, total } = await base.list({ skip, take, where: Object.keys(where).length ? where : undefined, orderBy: { createdAt: 'desc' } });
+  return { customers: items, total };
 }
+
+export async function getCustomerById(id: number) {
+  return await base.getById(id);
+}
+
+export async function createCustomer(data: CreateCustomerData, ctx?: ServiceContext) {
+  return await base.create(data as unknown as Record<string, unknown>, undefined, ctx);
+}
+
+export async function updateCustomer(id: number, data: UpdateCustomerData, ctx?: ServiceContext) {
+  return await base.updateById(id, data as unknown as Record<string, unknown>, undefined, ctx);
+}
+
+export async function deleteCustomer(id: number) {
+  return await base.deleteById(id);
+}
+
+export default { getAllCustomers, getCustomerById, createCustomer, updateCustomer, deleteCustomer };
