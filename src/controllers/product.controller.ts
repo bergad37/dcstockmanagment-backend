@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as productService from '../services/product.service';
+import * as stockService from '../services/stock.service';
 import { ResponseUtil } from '../utils/response';
 import { PaginationUtil } from '../utils/pagination';
 import {
@@ -8,8 +9,6 @@ import {
   UpdateProductData,
   ProductType,
 } from '../common/types';
-
-
 
 export const getAllProducts = async (req: Request, res: Response) => {
   try {
@@ -98,10 +97,34 @@ export const updateProduct = async (req: Request, res: Response) => {
   const authReq = req as AuthRequest;
   const user = authReq.user;
 
-    const updateData = { ...(req.body as UpdateProductData) } as UpdateProductData;
-    if (user) updateData.updatedBy = user.id;
+    const rawBody = req.body as any;
+    const { quantity, ...rest } = rawBody;
+    const cleaned: Record<string, unknown> = { ...(rest as Record<string, unknown>) };
+    Object.keys(cleaned).forEach(key => {
+      const v = cleaned[key];
+      if (v === '') delete cleaned[key];
+    });
 
-  const product = await productService.updateProduct(id, updateData, { userId: user?.id, user } as any);
+    const updateData = { ...(cleaned as UpdateProductData) } as UpdateProductData;
+    if (user) updateData.updatedBy = user.id;
+    if ((rest as any).supplierId === '') {
+      (updateData as any).supplierId = null;
+    }
+
+    const product = await productService.updateProduct(id, updateData, { userId: user?.id, user } as any);
+    if (quantity !== undefined && quantity !== null) {
+      try {
+  const stock = await stockService.getStockByProductId(id);
+        await stockService.updateStock(stock.id as unknown as string, { quantity }, { userId: user?.id, user } as any);
+      } catch (err) {
+        return ResponseUtil.error(
+          res,
+          err instanceof Error ? `Product updated but failed to update stock: ${err.message}` : 'Product updated but failed to update stock'
+        );
+      }
+      const updatedProduct = await productService.getProductById(id);
+      return ResponseUtil.success(res, 'Product updated successfully', updatedProduct);
+    }
     return ResponseUtil.success(res, 'Product updated successfully', product);
   } catch (error) {
     return ResponseUtil.error(

@@ -1,5 +1,6 @@
 import prisma from '../utils/database';
 import type { PrismaClient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import type { ServiceContext } from '../common/types';
 
 type DelegateShape = {
@@ -61,12 +62,35 @@ export function createBaseService<
     const finalData = { ...baseData } as Record<string, unknown>;
     if (ctx?.user?.id && finalData['updatedBy'] == null) finalData['updatedBy'] = ctx.user.id;
 
-    return await (delegate as unknown as { update(args?: unknown): Promise<Model> }).update({ where, data: finalData, include: include ?? defaultInclude } as unknown);
+    try {
+      return await (delegate as unknown as { update(args?: unknown): Promise<Model> }).update({ where, data: finalData, include: include ?? defaultInclude } as unknown);
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === 'P2002') {
+          const target = (err.meta && (err.meta as any).target) || (err.meta && (err.meta as any).fields) || undefined;
+          const fields = Array.isArray(target) ? target.join(', ') : target ? String(target) : undefined;
+          const detail = fields ? ` on field(s): ${fields}` : '';
+          throw new Error(`Duplicate value${detail}. A record with the same value already exists.`);
+        }
+      }
+      throw err;
+    }
   }
 
   async function deleteById(id: unknown): Promise<Model> {
     const where = { [idField]: id } as unknown;
-    return await (delegate as unknown as { delete(args?: unknown): Promise<Model> }).delete({ where } as unknown);
+    try {
+      return await (delegate as unknown as { delete(args?: unknown): Promise<Model> }).delete({ where } as unknown);
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        if (err.code === 'P2003') {
+          const field = (err.meta && (err.meta as any).field) || undefined;
+          const detail = field ? ` (field: ${field})` : '';
+          throw new Error(`Cannot delete record: it is referenced by other records and cannot be removed${detail}`);
+        }
+      }
+      throw err;
+    }
   }
 
   function getPrisma(): PrismaClient {

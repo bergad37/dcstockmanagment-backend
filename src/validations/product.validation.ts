@@ -57,8 +57,10 @@ export const createProductValidation = [
     .withMessage('Cost price must be a positive number'),
 
   body('supplierId')
-    .optional()
-    .isString()
+    // Convert empty string to null (clearing relation from forms) and allow null/undefined
+    .customSanitizer((value) => (value === '' ? null : value))
+    .optional({ nullable: true })
+    .isUUID()
     .withMessage('Supplier ID must be a UUID string'),
 ];
 
@@ -102,8 +104,21 @@ export const updateProductValidation = [
     .isFloat({ min: 0 })
     .withMessage('Cost price must be a positive number'),
 
-  body('supplierId')
+  body('quantity')
     .optional()
-    .isString()
+    .isInt({ min: 1 })
+    .withMessage('Quantity must be a positive integer')
+    .custom((value, { req }) => {
+      const body = req.body as { type?: ProductType };
+      if (body.type === ProductType.ITEM && value !== 1) {
+        throw new Error('Quantity for ITEM type must be 1');
+      }
+      return true;
+    }),
+
+  body('supplierId')
+    .customSanitizer((value) => (value === '' ? null : value))
+    .optional({ nullable: true })
+    .isUUID()
     .withMessage('Supplier ID must be a UUID string'),
 ];
