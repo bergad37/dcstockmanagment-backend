@@ -2,17 +2,25 @@ import { Request, Response } from 'express';
 import * as transactionService from '../services/transaction.service';
 import { ResponseUtil } from '../utils/response';
 import { PaginationUtil } from '../utils/pagination';
-import { TransactionType, CreateTransactionData, UpdateTransactionData, TransactionItemInput } from '../common/types';
+import {
+  TransactionType,
+  CreateTransactionData,
+  UpdateTransactionData,
+  TransactionItemInput,
+} from '../common/types';
+import prisma from '../utils/database';
 
-
-
-const normalizeType = (t?: string) => (t ? TransactionType[t.toUpperCase() as keyof typeof TransactionType] : undefined);
+const normalizeType = (t?: string) =>
+  t
+    ? TransactionType[t.toUpperCase() as keyof typeof TransactionType]
+    : undefined;
 
 const validateItems = (items: TransactionItemInput[]) => {
   if (!items?.length) return 'At least one item is required';
   for (const i of items) {
     if (!i.productId) return 'Invalid productId';
-    if (!Number.isInteger(i.quantity) || i.quantity <= 0) return 'Invalid quantity';
+    if (!Number.isInteger(i.quantity) || i.quantity <= 0)
+      return 'Invalid quantity';
     if (typeof i.unitPrice !== 'number') return 'Invalid unitPrice';
   }
   return null;
@@ -23,7 +31,12 @@ export const getAllTransactions = async (req: Request, res: Response) => {
     const { skip, limit, page } = PaginationUtil.getPaginationParams(req);
     const { type, startDate, endDate, searchKey } = req.query;
 
-    const conditions: { type?: string; startDate?: string; endDate?: string; searchKey?: string } = {};
+    const conditions: {
+      type?: string;
+      startDate?: string;
+      endDate?: string;
+      searchKey?: string;
+    } = {};
     if (type) {
       const normalized = normalizeType(String(type));
       if (normalized) conditions.type = String(normalized);
@@ -33,7 +46,11 @@ export const getAllTransactions = async (req: Request, res: Response) => {
     if (endDate) conditions.endDate = String(endDate);
     if (searchKey) conditions.searchKey = String(searchKey);
 
-    const { transactions, total } = await transactionService.getAllTransactions(skip, limit, conditions);
+    const { transactions, total } = await transactionService.getAllTransactions(
+      skip,
+      limit,
+      conditions
+    );
     return ResponseUtil.success(res, 'OK', {
       transactions,
       pagination: PaginationUtil.getPaginationMeta(page, limit, total),
@@ -46,7 +63,9 @@ export const getAllTransactions = async (req: Request, res: Response) => {
 export const getTransactionById = async (req: Request, res: Response) => {
   try {
     const tx = await transactionService.getTransactionById(req.params.id!);
-    return tx ? ResponseUtil.success(res, 'OK', tx) : ResponseUtil.notFound(res, 'Transaction not found');
+    return tx
+      ? ResponseUtil.success(res, 'OK', tx)
+      : ResponseUtil.notFound(res, 'Transaction not found');
   } catch {
     return ResponseUtil.error(res, 'Error fetching transaction');
   }
@@ -55,7 +74,7 @@ export const getTransactionById = async (req: Request, res: Response) => {
 export const createTransaction = async (req: Request, res: Response) => {
   try {
     const authReq = req as any;
-      const user = authReq.user;
+    const user = authReq.user;
     const body = req.body;
     const type = normalizeType(body.type);
     if (!type) return ResponseUtil.error(res, 'Invalid transaction type');
@@ -70,14 +89,128 @@ export const createTransaction = async (req: Request, res: Response) => {
       profitLoss: body.profitLoss,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       returnDate: body.returnDate ? new Date(body.returnDate) : undefined,
-        createdBy: body.createdBy ?? user?.id,
+      createdBy: body.createdBy ?? user?.id,
       items: body.items,
     };
 
-      const result = await transactionService.createTransactionWithStock(data, { userId: user?.id, user } as any);
+    const result = await transactionService.createTransactionWithStock(data, {
+      userId: user?.id,
+      user,
+    } as any);
     return ResponseUtil.created(res, 'Created', result);
   } catch {
     return ResponseUtil.error(res, 'Create failed');
+  }
+};
+
+export const createStockOutTransaction = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const authReq = req as any;
+    const user = authReq.user;
+    const body = req.body;
+
+    // Map RENTED to RENT
+    const type =
+      body.type === 'RENTED' ? TransactionType.RENT : TransactionType.SOLD;
+    if (!type) return ResponseUtil.error(res, 'Invalid transaction type');
+
+    // Validate customer exists
+    const customer = await prisma.customer.findUnique({
+      where: { id: body.customerId },
+    });
+    if (!customer)
+      return ResponseUtil.error(
+        res,
+        'Customer not found, please add the client first.'
+      );
+
+    // Get all product IDs
+    const productIds = body.items.map((item: any) => item.productId);
+
+    // Validate products exist and get details
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      include: { stock: true },
+    });
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    // Check stock for each item
+    for (const item of body.items) {
+      const product = productMap.get(item.productId);
+      if (!product) return ResponseUtil.error(res, `Product not found: ${item.productId}`);
+      if (!product.stock) return ResponseUtil.error(res, `Stock not found for product: ${item.productId}`);
+
+      if (product.type === 'QUANTITY') {
+        if (product.stock.quantity < item.quantity) {
+          return ResponseUtil.error(
+            res,
+            `Insufficient stock for product ${product.name}. Available: ${product.stock.quantity}, Requested: ${item.quantity}`
+          );
+        }
+      } else if (product.type === 'ITEM') {
+        if (item.quantity !== 1) {
+          return ResponseUtil.error(
+            res,
+            `Quantity must be 1 for item-type product: ${product.name}`
+          );
+        }
+        if (product.stock.quantity < 1) {
+          return ResponseUtil.error(res, `Item not available in stock: ${product.name}`);
+        }
+      }
+    }
+
+    // Validate return date for rented items
+    if (type === TransactionType.RENT && !body.returnDate) {
+      return ResponseUtil.error(
+        res,
+        'Return date is required for rented items'
+      );
+    }
+
+    // Prepare transaction data
+    const transactionDate = new Date(body.transactionDate);
+    const returnDate = body.returnDate ? new Date(body.returnDate) : undefined;
+
+    const items = body.items.map((item: any) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice || 0, // Default to 0 if not provided
+      unitCostPrice: item.unitCostPrice || productMap.get(item.productId)?.costPrice ? Number(productMap.get(item.productId)!.costPrice) : undefined,
+    }));
+
+    // Calculate totals
+    const totalAmount = items.reduce((sum: number, item: any) => sum + (item.unitPrice * item.quantity), 0);
+    const totalCost = items.reduce((sum: number, item: any) => sum + ((item.unitCostPrice || 0) * item.quantity), 0);
+
+    const data: CreateTransactionData = {
+      customerId: body.customerId,
+      type,
+      startDate: transactionDate,
+      returnDate: type === TransactionType.RENT ? returnDate : undefined,
+      createdBy: user?.id,
+      items,
+      totalAmount,
+      totalCost,
+    };
+
+    data.profitLoss = (data.totalAmount || 0) - (data.totalCost || 0);
+
+    const result = await transactionService.createTransactionWithStock(data, {
+      userId: user?.id,
+      user,
+    } as any);
+    return ResponseUtil.created(
+      res,
+      'Stock out transaction created successfully',
+      result
+    );
+  } catch (error) {
+    console.error('Create stock out transaction error:', error);
+    return ResponseUtil.error(res, 'Failed to create stock out transaction');
   }
 };
 
@@ -92,7 +225,8 @@ export const updateTransaction = async (req: Request, res: Response) => {
     if (!existing) return ResponseUtil.notFound(res, 'Not found');
 
     const newType = body.type ? normalizeType(body.type) : undefined;
-    if (body.type && !newType) return ResponseUtil.error(res, 'Invalid transaction type');
+    if (body.type && !newType)
+      return ResponseUtil.error(res, 'Invalid transaction type');
 
     const data: UpdateTransactionData = {
       ...body,
@@ -102,9 +236,14 @@ export const updateTransaction = async (req: Request, res: Response) => {
     };
 
     // attach updatedBy from authenticated user when available
-      if (user) (data as any).updatedBy = user.id;
+    if (user) (data as any).updatedBy = user.id;
 
-      const updated = await transactionService.updateTransactionWithStockAdjustments(id!, data, { userId: user?.id, user } as any);
+    const updated =
+      await transactionService.updateTransactionWithStockAdjustments(
+        id!,
+        data,
+        { userId: user?.id, user } as any
+      );
     return ResponseUtil.success(res, 'Updated', updated);
   } catch {
     return ResponseUtil.error(res, 'Update failed');

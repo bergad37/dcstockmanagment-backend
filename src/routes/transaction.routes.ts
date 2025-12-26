@@ -1,14 +1,25 @@
 import { Router } from 'express';
-import { getAllTransactions, getTransactionById, createTransaction, updateTransaction, deleteTransaction } from '../controllers/transaction.controller';
+import {
+  getAllTransactions,
+  getTransactionById,
+  createTransaction,
+  createStockOutTransaction,
+  updateTransaction,
+  deleteTransaction,
+} from '../controllers/transaction.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { ValidationMiddleware } from '../middlewares/validation.middleware';
 import {
-  createTransactionValidation,
+  createStockOutValidation,
   updateTransactionValidation,
 } from '../validations/transaction.validation';
 
 const router: Router = Router();
-router.get('/', AuthMiddleware.authenticate.bind(AuthMiddleware), getAllTransactions);
+router.get(
+  '/',
+  AuthMiddleware.authenticate.bind(AuthMiddleware),
+  getAllTransactions
+);
 
 router.get(
   '/:id',
@@ -19,9 +30,17 @@ router.get(
 router.post(
   '/',
   AuthMiddleware.authenticate.bind(AuthMiddleware),
-  createTransactionValidation,
+  createStockOutValidation,
   ValidationMiddleware.handle.bind(ValidationMiddleware),
   createTransaction
+);
+
+router.post(
+  '/stock/out',
+  AuthMiddleware.authenticate.bind(AuthMiddleware),
+  createStockOutValidation,
+  ValidationMiddleware.handle.bind(ValidationMiddleware),
+  createStockOutTransaction
 );
 
 router.put(

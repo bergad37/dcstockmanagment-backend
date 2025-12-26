@@ -94,42 +94,92 @@ export async function createTransaction(data: CreateTransactionData, ctx?: Servi
   return transaction;
 }
 
-export async function createTransactionWithStock(data: CreateTransactionData, ctx?: ServiceContext) {
+export async function createTransactionWithStock(
+  data: CreateTransactionData,
+  ctx?: ServiceContext
+) {
   const needsStock = data.type === 'RENT' || data.type === 'SOLD';
-  const productIds = data.items.map(i => i.productId);
+  const productIds = data.items.map((i) => i.productId);
 
-  const stocks = await prisma.stock.findMany({ where: { productId: { in: productIds } } });
-  const stockMap = new Map(stocks.map(s => [s.productId, s]));
+  // Get products with stock info
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    include: { stock: true },
+  });
+  const productMap = new Map(products.map((p) => [p.id, p]));
 
   if (needsStock) {
     for (const item of data.items) {
-      const s = stockMap.get(item.productId);
-      if (!s) throw new Error(`Stock not found for product: ${item.productId}`);
-      if (s.quantity < item.quantity) throw new Error(`Insufficient stock for product: ${item.productId}`);
+      const product = productMap.get(item.productId);
+      if (!product) throw new Error(`Product not found: ${item.productId}`);
+      if (!product.stock)
+        throw new Error(`Stock not found for product: ${item.productId}`);
+
+      // Check stock based on product type
+      if (product.type === 'QUANTITY') {
+        if (product.stock.quantity < item.quantity) {
+          throw new Error(
+            `Insufficient stock for product ${product.name}. Available: ${product.stock.quantity}, Requested: ${item.quantity}`
+          );
+        }
+      } else if (product.type === 'ITEM') {
+        if (item.quantity !== 1) {
+          throw new Error(
+            `Quantity must be 1 for item-type product: ${product.name}`
+          );
+        }
+        if (product.stock.quantity < 1) {
+          throw new Error(`Item not available in stock: ${product.name}`);
+        }
+      }
     }
   }
 
-  const created = await prisma.$transaction(async tx => {
-  const createdBy = data.createdBy ?? ctx?.user?.id;
+  const created = await prisma.$transaction(async (tx) => {
+    const createdBy = data.createdBy ?? ctx?.user?.id;
     const createdTx = await tx.transaction.create({
       data: {
         customerId: data.customerId,
         type: data.type,
-        totalAmount: data.totalAmount !== undefined ? new Decimal(String(data.totalAmount)) : null,
-        totalCost: data.totalCost !== undefined ? new Decimal(String(data.totalCost)) : null,
-        profitLoss: data.profitLoss !== undefined ? new Decimal(String(data.profitLoss)) : null,
+        totalAmount:
+          data.totalAmount !== undefined
+            ? new Decimal(String(data.totalAmount))
+            : null,
+        totalCost:
+          data.totalCost !== undefined
+            ? new Decimal(String(data.totalCost))
+            : null,
+        profitLoss:
+          data.profitLoss !== undefined
+            ? new Decimal(String(data.profitLoss))
+            : null,
         startDate: data.startDate,
         returnDate: data.returnDate,
         createdBy: createdBy,
-        items: { create: data.items.map(i => ({ productId: i.productId, quantity: i.quantity, unitPrice: new Decimal(String(i.unitPrice)), unitCostPrice: i.unitCostPrice !== undefined ? new Decimal(String(i.unitCostPrice)) : null })) },
+        items: {
+          create: data.items.map((i) => ({
+            productId: i.productId,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice !== undefined
+              ? new Decimal(String(i.unitPrice))
+              : null,
+            unitCostPrice:
+              i.unitCostPrice !== undefined
+                ? new Decimal(String(i.unitCostPrice))
+                : null,
+          })),
+        },
       },
       include: { customer: true, items: { include: { product: true } } },
     });
 
     if (needsStock) {
       for (const it of data.items) {
-        const s = stockMap.get(it.productId)!;
-        await tx.stock.update({ where: { id: s.id }, data: { quantity: { decrement: it.quantity } } });
+        const product = productMap.get(it.productId)!;
+        await tx.stock.update({
+          where: { id: product.stock!.id },
+          data: { quantity: { decrement: it.quantity } },
+        });
       }
     }
 
