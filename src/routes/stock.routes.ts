@@ -1,5 +1,10 @@
 import { Router } from 'express';
-import { getAllStock, getStockById, getStockByProductId, updateStock } from '../controllers/stock.controller';
+import {
+  getAllStock,
+  getStockById,
+  getStockByProductId,
+  updateStock,
+} from '../controllers/stock.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { ValidationMiddleware } from '../middlewares/validation.middleware';
 import { updateStockValidation } from '../validations/stock.validation';
