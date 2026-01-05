@@ -1,4 +1,8 @@
-import { CreateTransactionData, UpdateTransactionData, ServiceContext } from '../common/types';
+import {
+  CreateTransactionData,
+  UpdateTransactionData,
+  ServiceContext,
+} from '../common/types';
 import prisma from '../utils/database';
 import { Decimal } from '@prisma/client/runtime/library';
 import { createBaseService } from './base.service';
@@ -6,7 +10,12 @@ import { createBaseService } from './base.service';
 export async function getAllTransactions(
   skip: number,
   take: number,
-  c?: { type?: string; startDate?: string; endDate?: string; searchKey?: string },
+  c?: {
+    type?: string;
+    startDate?: string;
+    endDate?: string;
+    searchKey?: string;
+  }
 ) {
   const { type, startDate, endDate, searchKey } = c || {};
 
@@ -20,13 +29,20 @@ export async function getAllTransactions(
 
   const where = {
     ...(type && { type }),
-    ...(startDate && endDate && {
-      createdAt: { gte: new Date(startDate), lte: new Date(endDate) },
-    }),
+    ...(startDate &&
+      endDate && {
+        createdAt: { gte: new Date(startDate), lte: new Date(endDate) },
+      }),
     ...(searchKey && {
       OR: [
         { customer: { name: { contains: searchKey, mode: 'insensitive' } } },
-        { items: { some: { product: { name: { contains: searchKey, mode: 'insensitive' } } } } },
+        {
+          items: {
+            some: {
+              product: { name: { contains: searchKey, mode: 'insensitive' } },
+            },
+          },
+        },
       ],
     }),
   };
@@ -61,23 +77,38 @@ export async function getTransactionById(id: string) {
   return transaction;
 }
 
-export async function createTransaction(data: CreateTransactionData, ctx?: ServiceContext) {
+export async function createTransaction(
+  data: CreateTransactionData,
+  ctx?: ServiceContext
+) {
   const transaction = await prisma.transaction.create({
     data: {
       customerId: data.customerId,
       type: data.type,
-      totalAmount: data.totalAmount !== undefined ? new Decimal(String(data.totalAmount)) : null,
-      totalCost: data.totalCost !== undefined ? new Decimal(String(data.totalCost)) : null,
-      profitLoss: data.profitLoss !== undefined ? new Decimal(String(data.profitLoss)) : null,
+      totalAmount:
+        data.totalAmount !== undefined
+          ? new Decimal(String(data.totalAmount))
+          : null,
+      totalCost:
+        data.totalCost !== undefined
+          ? new Decimal(String(data.totalCost))
+          : null,
+      profitLoss:
+        data.profitLoss !== undefined
+          ? new Decimal(String(data.profitLoss))
+          : null,
       startDate: data.startDate,
       returnDate: data.returnDate,
-  createdBy: data.createdBy ?? ctx?.user?.id,
+      createdBy: data.createdBy ?? ctx?.user?.id,
       items: {
-        create: data.items.map(item => ({
+        create: data.items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
           unitPrice: new Decimal(String(item.unitPrice)),
-          unitCostPrice: item.unitCostPrice !== undefined ? new Decimal(String(item.unitCostPrice)) : null,
+          unitCostPrice:
+            item.unitCostPrice !== undefined
+              ? new Decimal(String(item.unitCostPrice))
+              : null,
         })),
       },
     },
@@ -160,9 +191,10 @@ export async function createTransactionWithStock(
           create: data.items.map((i) => ({
             productId: i.productId,
             quantity: i.quantity,
-            unitPrice: i.unitPrice !== undefined
-              ? new Decimal(String(i.unitPrice))
-              : null,
+            unitPrice:
+              i.unitPrice !== undefined
+                ? new Decimal(String(i.unitPrice))
+                : null,
             unitCostPrice:
               i.unitCostPrice !== undefined
                 ? new Decimal(String(i.unitCostPrice))
@@ -189,15 +221,28 @@ export async function createTransactionWithStock(
   return created;
 }
 
-export async function updateTransaction(id: string, data: UpdateTransactionData, ctx?: ServiceContext) {
+export async function updateTransaction(
+  id: string,
+  data: UpdateTransactionData,
+  ctx?: ServiceContext
+) {
   const transaction = await prisma.transaction.update({
     where: { id },
     data: {
       customerId: data.customerId,
       type: data.type,
-      totalAmount: data.totalAmount !== undefined ? new Decimal(String(data.totalAmount)) : undefined,
-      totalCost: data.totalCost !== undefined ? new Decimal(String(data.totalCost)) : undefined,
-      profitLoss: data.profitLoss !== undefined ? new Decimal(String(data.profitLoss)) : undefined,
+      totalAmount:
+        data.totalAmount !== undefined
+          ? new Decimal(String(data.totalAmount))
+          : undefined,
+      totalCost:
+        data.totalCost !== undefined
+          ? new Decimal(String(data.totalCost))
+          : undefined,
+      profitLoss:
+        data.profitLoss !== undefined
+          ? new Decimal(String(data.profitLoss))
+          : undefined,
       startDate: data.startDate,
       returnDate: data.returnDate,
       updatedBy: data.updatedBy ?? ctx?.user?.id,
@@ -215,37 +260,59 @@ export async function updateTransaction(id: string, data: UpdateTransactionData,
   return transaction;
 }
 
-export async function updateTransactionWithStockAdjustments(id: string, data: UpdateTransactionData, ctx?: ServiceContext) {
+export async function updateTransactionWithStockAdjustments(
+  id: string,
+  data: UpdateTransactionData,
+  ctx?: ServiceContext
+) {
   const existing = await getTransactionWithItems(id);
   if (!existing) throw new Error('Transaction not found');
 
   const newType = data.type !== undefined ? data.type : existing.type;
 
   if (newType === 'RETURNED' && existing.items?.length) {
-    await prisma.$transaction(async tx => {
+    await prisma.$transaction(async (tx) => {
       for (const it of existing.items) {
-        await tx.stock.update({ where: { productId: it.productId }, data: { quantity: { increment: it.quantity } } });
+        await tx.stock.update({
+          where: { productId: it.productId },
+          data: { quantity: { increment: it.quantity } },
+        });
       }
-      await tx.transaction.update({ where: { id }, data: { ...data, updatedBy: data.updatedBy ?? ctx?.user?.id } });
+      await tx.transaction.update({
+        where: { id },
+        data: { ...data, updatedBy: data.updatedBy ?? ctx?.user?.id },
+      });
     });
     return getTransactionById(id);
   }
 
-  if (existing.type === 'RETURNED' && (newType === 'RENT' || newType === 'SOLD')) {
-    const productIds = existing.items.map(i => i.productId);
-    const stocks = await prisma.stock.findMany({ where: { productId: { in: productIds } } });
-    const stockMap = new Map(stocks.map(s => [s.productId, s]));
+  if (
+    existing.type === 'RETURNED' &&
+    (newType === 'RENT' || newType === 'SOLD')
+  ) {
+    const productIds = existing.items.map((i) => i.productId);
+    const stocks = await prisma.stock.findMany({
+      where: { productId: { in: productIds } },
+    });
+    const stockMap = new Map(stocks.map((s) => [s.productId, s]));
     for (const it of existing.items) {
       const s = stockMap.get(it.productId);
-      if (!s || s.quantity < it.quantity) throw new Error(`Insufficient stock for product: ${it.productId}`);
+      if (!s || s.quantity < it.quantity)
+        throw new Error(`Insufficient stock for product: ${it.productId}`);
     }
 
-    await prisma.$transaction(async tx => {
+    await prisma.$transaction(async (tx) => {
       for (const it of existing.items) {
         const s = stockMap.get(it.productId)!;
-        await tx.stock.update({ where: { id: s.id }, data: { quantity: { decrement: it.quantity } } });
+        await tx.stock.update({
+          where: { id: s.id },
+          data: { quantity: { decrement: it.quantity } },
+        });
       }
-      await tx.transaction.update({ where: { id }, data: { ...data, updatedBy: data.updatedBy ?? ctx?.user?.id } });
+      await tx.transaction.update({
+        where: { id },
+        data: { ...data, updatedBy: data.updatedBy ?? ctx?.user?.id },
+      });
     });
 
     return getTransactionById(id);
@@ -280,9 +347,12 @@ export async function deleteTransactionWithStockAdjustments(id: string) {
     return;
   }
 
-  await prisma.$transaction(async tx => {
+  await prisma.$transaction(async (tx) => {
     for (const it of txObj.items) {
-      await tx.stock.update({ where: { productId: it.productId }, data: { quantity: { increment: it.quantity } } });
+      await tx.stock.update({
+        where: { productId: it.productId },
+        data: { quantity: { increment: it.quantity } },
+      });
     }
     await tx.transaction.delete({ where: { id } });
   });

@@ -22,6 +22,9 @@ export async function getAllStock(
   const { searchKey, startDate, endDate } = conditions || {};
   const where: any = {};
 
+  // Exclude stocks with zero quantity
+  where.quantity = { not: 0 };
+
   if (searchKey) {
     where.product = { name: { contains: searchKey, mode: 'insensitive' } };
   }
