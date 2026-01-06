@@ -120,14 +120,33 @@ export const createStockOutTransaction = async (
       body.type === 'RENTED' ? TransactionType.RENT : TransactionType.SOLD;
 
     // Validate customer
-    const customer = await prisma.customer.findUnique({
-      where: { id: body.customerId },
-    });
+    let customer = null;
 
+    // Case 1: customerId provided → find customer
+    if (body.customerId) {
+      customer = await prisma.customer.findUnique({
+        where: { id: body.customerId },
+      });
+    }
+
+    // Case 2: customer not found but customerName provided → create customer
+    if (!customer && body.customerName) {
+      customer = await prisma.customer.create({
+        data: {
+          name: body.customerName,
+          createdBy: user?.id,
+          // add optional fields if needed
+          // phone: body.phone,
+          // email: body.email,
+        },
+      });
+    }
+
+    // Case 3: neither found nor name provided → error
     if (!customer) {
       return ResponseUtil.error(
         res,
-        'Customer not found, please add the client first.'
+        'Customer not found. Please select or enter a customer name.'
       );
     }
 
@@ -215,7 +234,7 @@ export const createStockOutTransaction = async (
       );
 
       const data: CreateTransactionData = {
-        customerId: body.customerId,
+        customerId: body.customerId ? body.customerId : customer.id,
         type,
         startDate,
         createdBy: user?.id,
@@ -249,7 +268,7 @@ export const createStockOutTransaction = async (
       const totalCost = unitCostPrice * item.quantity;
 
       const data: CreateTransactionData = {
-        customerId: body.customerId,
+        customerId: body.customerId ? body.customerId : customer.id,
         type: TransactionType.RENT,
         startDate,
         expectedReturnDate,

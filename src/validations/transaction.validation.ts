@@ -1,13 +1,6 @@
 import { body } from 'express-validator';
 
 export const createStockOutValidation = [
-  // Root product - removed since using items
-  // body('productId')
-  //   .notEmpty()
-  //   .withMessage('Product ID is required')
-  //   .isString()
-  //   .withMessage('Product ID must be a string'),
-
   // Transaction type
   body('type')
     .notEmpty()
@@ -22,19 +15,35 @@ export const createStockOutValidation = [
     .isISO8601()
     .withMessage('Transaction date must be a valid ISO8601 date'),
 
-  // Return date (only for RENTED)
-  //   body('returnDate')
-  //     .if(body('type').equals('RENTED'))
-  //     .notEmpty()
-  //     .withMessage('Return date is required for rented items')
-  //     .isISO8601()
-  //     .withMessage('Return date must be a valid ISO8601 date'),
-
-  // Expected return date (optional, only for RENTED)
+  // Expected return date (required only for RENTED)
   body('expectedReturnDate')
-    .optional()
+    .if(body('type').equals('RENTED'))
+    .notEmpty()
+    .withMessage('Expected return date is required for rented items')
     .isISO8601()
     .withMessage('Expected return date must be a valid ISO8601 date'),
+
+  // CustomerId (optional)
+  body('customerId')
+    .optional()
+    .isString()
+    .withMessage('Customer ID must be a string'),
+
+  // CustomerName (optional)
+  body('customerName')
+    .optional()
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage('Customer name cannot be empty'),
+
+  // ❗ Require at least one of customerId or customerName
+  body().custom((value) => {
+    if (!value.customerId && !value.customerName) {
+      throw new Error('Either customerId or customerName must be provided');
+    }
+    return true;
+  }),
 
   // Items array
   body('items')
@@ -46,12 +55,6 @@ export const createStockOutValidation = [
     .withMessage('Item product ID is required')
     .isString()
     .withMessage('Item product ID must be a string'),
-
-  body('customerId')
-    .notEmpty()
-    .withMessage('Customer ID is required')
-    .isString()
-    .withMessage('Customer ID must be a string'),
 
   body('items.*.quantity')
     .notEmpty()
@@ -65,7 +68,6 @@ export const createStockOutValidation = [
     .isNumeric()
     .withMessage('Unit price must be a number'),
 ];
-
 export const updateTransactionValidation = [
   body('type')
     .optional()
