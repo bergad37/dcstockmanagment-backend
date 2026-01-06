@@ -306,8 +306,16 @@ export const schemas = {
       profitLoss: { type: 'number', nullable: true },
       startDate: { type: 'string', format: 'date-time', nullable: true },
       returnDate: { type: 'string', format: 'date-time', nullable: true },
+      expectedReturnDate: {
+        type: 'string',
+        format: 'date-time',
+        nullable: true,
+      },
       createdAt: { type: 'string', format: 'date-time' },
-      items: { type: 'array', items: { $ref: '#/components/schemas/TransactionItem' } },
+      items: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/TransactionItem' },
+      },
     },
   },
 
@@ -322,7 +330,11 @@ export const schemas = {
       profitLoss: { type: 'number' },
       startDate: { type: 'string', format: 'date-time' },
       returnDate: { type: 'string', format: 'date-time' },
-      items: { type: 'array', items: { $ref: '#/components/schemas/TransactionItem' } },
+      expectedReturnDate: { type: 'string', format: 'date-time' },
+      items: {
+        type: 'array',
+        items: { $ref: '#/components/schemas/TransactionItem' },
+      },
     },
   },
 
@@ -336,6 +348,7 @@ export const schemas = {
       profitLoss: { type: 'number' },
       startDate: { type: 'string', format: 'date-time' },
       returnDate: { type: 'string', format: 'date-time' },
+      expectedReturnDate: { type: 'string', format: 'date-time' },
     },
   },
 
@@ -386,6 +399,23 @@ export const schemas = {
     type: 'object',
     properties: {
       quantity: { type: 'integer' },
+    },
+  },
+
+  MarkAsReturnedInput: {
+    type: 'object',
+    required: ['quantity', 'productId'],
+    properties: {
+      quantity: {
+        type: 'integer',
+        description: 'Quantity being returned',
+        example: 5,
+      },
+      productId: {
+        type: 'string',
+        description: 'Product ID being returned',
+        example: 'prod-123',
+      },
     },
   },
 
@@ -451,7 +481,10 @@ export const schemas = {
       data: {
         type: 'object',
         properties: {
-          customers: { type: 'array', items: { $ref: '#/components/schemas/Customer' } },
+          customers: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/Customer' },
+          },
           pagination: { $ref: '#/components/schemas/PaginationMeta' },
         },
       },
@@ -466,7 +499,10 @@ export const schemas = {
       data: {
         type: 'object',
         properties: {
-          suppliers: { type: 'array', items: { $ref: '#/components/schemas/Supplier' } },
+          suppliers: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/Supplier' },
+          },
           pagination: { $ref: '#/components/schemas/PaginationMeta' },
         },
       },

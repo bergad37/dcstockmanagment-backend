@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import * as stockService from '../services/stock.service';
+import * as transactionService from '../services/transaction.service';
 import { ResponseUtil } from '../utils/response';
 import { PaginationUtil } from '../utils/pagination';
-import { UpdateStockData } from '../common/types';
+import { UpdateStockData, TransactionType } from '../common/types';
 
 
 
@@ -55,6 +56,37 @@ export const updateStock = async (req: Request, res: Response) => {
     return ResponseUtil.success(res, 'Stock updated successfully', stock);
   } catch (error) {
     return ResponseUtil.error(res, error instanceof Error ? error.message : 'Failed to update stock');
+  }
+};
+
+export const markTransactionAsReturned = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const transactionId = req.params.transactionId!;
+    const authReq = req as any;
+    const user = authReq.user;
+
+    // Mark the transaction as RETURNED, which will update stock automatically
+    const transaction =
+      await transactionService.updateTransactionWithStockAdjustments(
+        transactionId,
+        { type: TransactionType.RETURNED },
+        { userId: user?.id, user } as any
+      );
+    return ResponseUtil.success(
+      res,
+      'Transaction marked as returned successfully',
+      transaction
+    );
+  } catch (error) {
+    return ResponseUtil.error(
+      res,
+      error instanceof Error
+        ? error.message
+        : 'Failed to mark transaction as returned'
+    );
   }
 };
 

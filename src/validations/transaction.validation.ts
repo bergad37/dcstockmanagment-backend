@@ -23,12 +23,18 @@ export const createStockOutValidation = [
     .withMessage('Transaction date must be a valid ISO8601 date'),
 
   // Return date (only for RENTED)
-  body('returnDate')
-    .if(body('type').equals('RENTED'))
-    .notEmpty()
-    .withMessage('Return date is required for rented items')
+  //   body('returnDate')
+  //     .if(body('type').equals('RENTED'))
+  //     .notEmpty()
+  //     .withMessage('Return date is required for rented items')
+  //     .isISO8601()
+  //     .withMessage('Return date must be a valid ISO8601 date'),
+
+  // Expected return date (optional, only for RENTED)
+  body('expectedReturnDate')
+    .optional()
     .isISO8601()
-    .withMessage('Return date must be a valid ISO8601 date'),
+    .withMessage('Expected return date must be a valid ISO8601 date'),
 
   // Items array
   body('items')
@@ -77,4 +83,8 @@ export const updateTransactionValidation = [
     .optional()
     .isISO8601()
     .withMessage('Return date must be a valid ISO8601 date'),
+  body('expectedReturnDate')
+    .optional()
+    .isISO8601()
+    .withMessage('Expected return date must be a valid ISO8601 date'),
 ];

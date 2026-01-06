@@ -4,10 +4,14 @@ import {
   getStockById,
   getStockByProductId,
   updateStock,
+  markTransactionAsReturned,
 } from '../controllers/stock.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { ValidationMiddleware } from '../middlewares/validation.middleware';
-import { updateStockValidation } from '../validations/stock.validation';
+import {
+  updateStockValidation,
+  markAsReturnedValidation,
+} from '../validations/stock.validation';
 
 const router: Router = Router();
 router.get('/', AuthMiddleware.authenticate.bind(AuthMiddleware), getAllStock);
@@ -30,6 +34,14 @@ router.put(
   updateStockValidation,
   ValidationMiddleware.handle.bind(ValidationMiddleware),
   updateStock
+);
+
+router.patch(
+  '/out/:transactionId/return',
+  AuthMiddleware.authenticate.bind(AuthMiddleware),
+  markAsReturnedValidation,
+  ValidationMiddleware.handle.bind(ValidationMiddleware),
+  markTransactionAsReturned
 );
 
 export default router;

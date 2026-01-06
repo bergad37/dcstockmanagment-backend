@@ -89,6 +89,9 @@ export const createTransaction = async (req: Request, res: Response) => {
       profitLoss: body.profitLoss,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       returnDate: body.returnDate ? new Date(body.returnDate) : undefined,
+      expectedReturnDate: body.expectedReturnDate
+        ? new Date(body.expectedReturnDate)
+        : undefined,
       createdBy: body.createdBy ?? user?.id,
       items: body.items,
     };
@@ -140,8 +143,13 @@ export const createStockOutTransaction = async (
     // Check stock for each item
     for (const item of body.items) {
       const product = productMap.get(item.productId);
-      if (!product) return ResponseUtil.error(res, `Product not found: ${item.productId}`);
-      if (!product.stock) return ResponseUtil.error(res, `Stock not found for product: ${item.productId}`);
+      if (!product)
+        return ResponseUtil.error(res, `Product not found: ${item.productId}`);
+      if (!product.stock)
+        return ResponseUtil.error(
+          res,
+          `Stock not found for product: ${item.productId}`
+        );
 
       if (product.type === 'QUANTITY') {
         if (product.stock.quantity < item.quantity) {
@@ -158,39 +166,57 @@ export const createStockOutTransaction = async (
           );
         }
         if (product.stock.quantity < 1) {
-          return ResponseUtil.error(res, `Item not available in stock: ${product.name}`);
+          return ResponseUtil.error(
+            res,
+            `Item not available in stock: ${product.name}`
+          );
         }
       }
     }
 
     // Validate return date for rented items
-    if (type === TransactionType.RENT && !body.returnDate) {
+    if (type === TransactionType.RENT && !body.expectedReturnDate) {
       return ResponseUtil.error(
         res,
-        'Return date is required for rented items'
+        'Expected Return date is required for rented items'
       );
     }
 
     // Prepare transaction data
     const transactionDate = new Date(body.transactionDate);
     const returnDate = body.returnDate ? new Date(body.returnDate) : undefined;
+    const expectedReturnDate = body.expectedReturnDate
+      ? new Date(body.expectedReturnDate)
+      : undefined;
 
     const items = body.items.map((item: any) => ({
       productId: item.productId,
       quantity: item.quantity,
       unitPrice: item.unitPrice || 0, // Default to 0 if not provided
-      unitCostPrice: item.unitCostPrice || productMap.get(item.productId)?.costPrice ? Number(productMap.get(item.productId)!.costPrice) : undefined,
+      unitCostPrice:
+        item.unitCostPrice || productMap.get(item.productId)?.costPrice
+          ? Number(productMap.get(item.productId)!.costPrice)
+          : undefined,
     }));
 
     // Calculate totals
-    const totalAmount = items.reduce((sum: number, item: any) => sum + (item.unitPrice * item.quantity), 0);
-    const totalCost = items.reduce((sum: number, item: any) => sum + ((item.unitCostPrice || 0) * item.quantity), 0);
+    const totalAmount = items.reduce(
+      (sum: number, item: any) => sum + item.unitPrice * item.quantity,
+      0
+    );
+    const totalCost = items.reduce(
+      (sum: number, item: any) =>
+        sum + (item.unitCostPrice || 0) * item.quantity,
+      0
+    );
 
     const data: CreateTransactionData = {
       customerId: body.customerId,
       type,
       startDate: transactionDate,
       returnDate: type === TransactionType.RENT ? returnDate : undefined,
+      expectedReturnDate:
+        type === TransactionType.RENT ? expectedReturnDate : undefined,
       createdBy: user?.id,
       items,
       totalAmount,
@@ -233,6 +259,9 @@ export const updateTransaction = async (req: Request, res: Response) => {
       type: newType,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       returnDate: body.returnDate ? new Date(body.returnDate) : undefined,
+      expectedReturnDate: body.expectedReturnDate
+        ? new Date(body.expectedReturnDate)
+        : undefined,
     };
 
     // attach updatedBy from authenticated user when available

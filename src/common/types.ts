@@ -145,6 +145,7 @@ export interface CreateTransactionData {
   profitLoss?: number;
   startDate?: Date;
   returnDate?: Date;
+  expectedReturnDate?: Date;
   items: TransactionItemInput[];
   createdBy?: string;
 }
@@ -157,6 +158,7 @@ export interface UpdateTransactionData {
   profitLoss?: number;
   startDate?: Date;
   returnDate?: Date;
+  expectedReturnDate?: Date;
   updatedBy?: string;
 }
 

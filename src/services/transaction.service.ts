@@ -99,6 +99,7 @@ export async function createTransaction(
           : null,
       startDate: data.startDate,
       returnDate: data.returnDate,
+      expectedReturnDate: data.expectedReturnDate,
       createdBy: data.createdBy ?? ctx?.user?.id,
       items: {
         create: data.items.map((item) => ({
@@ -245,6 +246,7 @@ export async function updateTransaction(
           : undefined,
       startDate: data.startDate,
       returnDate: data.returnDate,
+      expectedReturnDate: data.expectedReturnDate,
       updatedBy: data.updatedBy ?? ctx?.user?.id,
     },
     include: {
