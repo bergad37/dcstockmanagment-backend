@@ -166,7 +166,6 @@ export async function createTransactionWithStock(
       }
     }
   }
-
   const created = await prisma.$transaction(async (tx) => {
     const createdBy = data.createdBy ?? ctx?.user?.id;
     const createdTx = await tx.transaction.create({
@@ -187,6 +186,7 @@ export async function createTransactionWithStock(
             : null,
         startDate: data.startDate,
         returnDate: data.returnDate,
+        expectedReturnDate: data.expectedReturnDate,
         createdBy: createdBy,
         items: {
           create: data.items.map((i) => ({
