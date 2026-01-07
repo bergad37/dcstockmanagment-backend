@@ -10,6 +10,7 @@ datasource db {
 enum ProductType {
   ITEM
   QUANTITY
+  CALIBRATION
 }
 
 enum TransactionType {
@@ -77,7 +78,7 @@ model Product {
   categoryId    String
   supplierId    String?
   name          String
-  type          ProductType // ITEM or QUANTITY
+  type          ProductType // ITEM, QUANTITY, or CALIBRATION
   serialNumber  String?  // id serial number (null)
   warranty      String?
   description   String?
@@ -108,17 +109,19 @@ model Stock {
 }
 
 model Transaction {
-  id          String           @id @default(uuid())
-  customerId  String?
-  type        TransactionType
-  totalAmount Decimal?         @db.Decimal(12,2) // Total selling price
-  totalCost   Decimal?         @db.Decimal(12,2) // Total cost price
-  profitLoss  Decimal?         @db.Decimal(12,2) // Profit or loss
-  startDate   DateTime?        // null for non-rent transactions
-  returnDate  DateTime?        // null for non-rent transactions
-  createdAt   DateTime         @default(now())
-  createdBy   String?
-  updatedBy   String?
+  id                String           @id @default(uuid())
+  customerId        String?
+  type              TransactionType
+  totalAmount       Decimal?         @db.Decimal(12,2) // Total selling price
+  totalCost         Decimal?         @db.Decimal(12,2) // Total cost price
+  profitLoss        Decimal?         @db.Decimal(12,2) // Profit or loss
+  startDate         DateTime?        // null for non-rent transactions
+  returnDate        DateTime?        // null for non-rent transactions
+  expectedReturnDate DateTime?       // Expected return date for RENT transactions
+  returnCondition   String?
+  createdAt         DateTime         @default(now())
+  createdBy         String?
+  updatedBy         String?
 
   customer  Customer?              @relation(fields: [customerId], references: [id])
   items     TransactionItem[]

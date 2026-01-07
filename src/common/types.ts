@@ -9,6 +9,7 @@ export enum UserRole {
 export enum ProductType {
   ITEM = 'ITEM',
   QUANTITY = 'QUANTITY',
+  CALIBRATION = 'CALIBRATION',
 }
 
 export enum TransactionType {
@@ -59,6 +60,7 @@ export interface PaginatedResponse<T> {
 export interface CreateProductData {
   categoryId: string;
   supplierId?: string;
+  supplierName?: string;
   name: string;
   type: ProductType;
   quantity: number; // Required - added for stock creation
@@ -145,6 +147,7 @@ export interface CreateTransactionData {
   profitLoss?: number;
   startDate?: Date;
   returnDate?: Date;
+  expectedReturnDate?: Date;
   items: TransactionItemInput[];
   createdBy?: string;
 }
@@ -157,6 +160,7 @@ export interface UpdateTransactionData {
   profitLoss?: number;
   startDate?: Date;
   returnDate?: Date;
+  expectedReturnDate?: Date;
   updatedBy?: string;
 }
 

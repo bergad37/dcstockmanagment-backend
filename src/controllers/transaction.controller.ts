@@ -89,6 +89,9 @@ export const createTransaction = async (req: Request, res: Response) => {
       profitLoss: body.profitLoss,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       returnDate: body.returnDate ? new Date(body.returnDate) : undefined,
+      expectedReturnDate: body.expectedReturnDate
+        ? new Date(body.expectedReturnDate)
+        : undefined,
       createdBy: body.createdBy ?? user?.id,
       items: body.items,
     };
@@ -112,45 +115,73 @@ export const createStockOutTransaction = async (
     const user = authReq.user;
     const body = req.body;
 
-    // Map RENTED to RENT
+    // Normalize type
     const type =
       body.type === 'RENTED' ? TransactionType.RENT : TransactionType.SOLD;
-    if (!type) return ResponseUtil.error(res, 'Invalid transaction type');
 
-    // Validate customer exists
-    const customer = await prisma.customer.findUnique({
-      where: { id: body.customerId },
-    });
-    if (!customer)
+    // Validate customer
+    let customer = null;
+
+    // Case 1: customerId provided → find customer
+    if (body.customerId) {
+      customer = await prisma.customer.findUnique({
+        where: { id: body.customerId },
+      });
+    }
+
+    // Case 2: customer not found but customerName provided → create customer
+    if (!customer && body.customerName) {
+      customer = await prisma.customer.create({
+        data: {
+          name: body.customerName,
+          createdBy: user?.id,
+          // add optional fields if needed
+          // phone: body.phone,
+          // email: body.email,
+        },
+      });
+    }
+
+    // Case 3: neither found nor name provided → error
+    if (!customer) {
       return ResponseUtil.error(
         res,
-        'Customer not found, please add the client first.'
+        'Customer not found. Please select or enter a customer name.'
       );
+    }
 
-    // Get all product IDs
-    const productIds = body.items.map((item: any) => item.productId);
-
-    // Validate products exist and get details
+    // Load products + stock
+    const productIds = body.items.map((i: any) => i.productId);
     const products = await prisma.product.findMany({
       where: { id: { in: productIds } },
       include: { stock: true },
     });
+
     const productMap = new Map(products.map((p) => [p.id, p]));
 
-    // Check stock for each item
+    // 🔍 Stock validation
     for (const item of body.items) {
       const product = productMap.get(item.productId);
-      if (!product) return ResponseUtil.error(res, `Product not found: ${item.productId}`);
-      if (!product.stock) return ResponseUtil.error(res, `Stock not found for product: ${item.productId}`);
+
+      if (!product)
+        return ResponseUtil.error(res, `Product not found: ${item.productId}`);
+
+      if (!product.stock)
+        return ResponseUtil.error(
+          res,
+          `Stock not found for product: ${product.name}`
+        );
 
       if (product.type === 'QUANTITY') {
         if (product.stock.quantity < item.quantity) {
           return ResponseUtil.error(
             res,
-            `Insufficient stock for product ${product.name}. Available: ${product.stock.quantity}, Requested: ${item.quantity}`
+            `Insufficient stock for ${product.name}. Available: ${product.stock.quantity}`
           );
         }
-      } else if (product.type === 'ITEM') {
+      }
+
+      if (product.type === 'ITEM') {
         if (item.quantity !== 1) {
           return ResponseUtil.error(
             res,
@@ -158,55 +189,115 @@ export const createStockOutTransaction = async (
           );
         }
         if (product.stock.quantity < 1) {
-          return ResponseUtil.error(res, `Item not available in stock: ${product.name}`);
+          return ResponseUtil.error(
+            res,
+            `Item not available in stock: ${product.name}`
+          );
         }
       }
     }
 
-    // Validate return date for rented items
-    if (type === TransactionType.RENT && !body.returnDate) {
+    // RENT requires expected return date
+    if (type === TransactionType.RENT && !body.expectedReturnDate) {
       return ResponseUtil.error(
         res,
-        'Return date is required for rented items'
+        'Expected return date is required for rented items'
       );
     }
 
-    // Prepare transaction data
-    const transactionDate = new Date(body.transactionDate);
-    const returnDate = body.returnDate ? new Date(body.returnDate) : undefined;
+    const startDate = new Date(body.transactionDate);
+    const expectedReturnDate = body.expectedReturnDate
+      ? new Date(body.expectedReturnDate)
+      : undefined;
 
-    const items = body.items.map((item: any) => ({
-      productId: item.productId,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice || 0, // Default to 0 if not provided
-      unitCostPrice: item.unitCostPrice || productMap.get(item.productId)?.costPrice ? Number(productMap.get(item.productId)!.costPrice) : undefined,
-    }));
+    // 🟢 SOLD → single transaction (existing behavior)
+    if (type === TransactionType.SOLD) {
+      const items = body.items.map((item: any) => {
+        const product = productMap.get(item.productId);
 
-    // Calculate totals
-    const totalAmount = items.reduce((sum: number, item: any) => sum + (item.unitPrice * item.quantity), 0);
-    const totalCost = items.reduce((sum: number, item: any) => sum + ((item.unitCostPrice || 0) * item.quantity), 0);
+        return {
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice || 0,
+          unitCostPrice: product?.costPrice ? Number(product.costPrice) : 0,
+        };
+      });
 
-    const data: CreateTransactionData = {
-      customerId: body.customerId,
-      type,
-      startDate: transactionDate,
-      returnDate: type === TransactionType.RENT ? returnDate : undefined,
-      createdBy: user?.id,
-      items,
-      totalAmount,
-      totalCost,
-    };
+      const totalAmount = items.reduce(
+        (sum: number, i: any) => sum + i.unitPrice * i.quantity,
+        0
+      );
 
-    data.profitLoss = (data.totalAmount || 0) - (data.totalCost || 0);
+      const totalCost = items.reduce(
+        (sum: number, i: any) => sum + i.unitCostPrice * i.quantity,
+        0
+      );
 
-    const result = await transactionService.createTransactionWithStock(data, {
-      userId: user?.id,
-      user,
-    } as any);
+      const data: CreateTransactionData = {
+        customerId: body.customerId ? body.customerId : customer.id,
+        type,
+        startDate,
+        createdBy: user?.id,
+        items,
+        totalAmount,
+        totalCost,
+        profitLoss: totalAmount - totalCost,
+      };
+
+      const result = await transactionService.createTransactionWithStock(data, {
+        userId: user?.id,
+        user,
+      } as any);
+
+      return ResponseUtil.created(
+        res,
+        'Stock out transaction created successfully',
+        result
+      );
+    }
+
+    // 🟡 RENT → one transaction per item
+    const createdTransactions = [];
+
+    for (const item of body.items) {
+      const product = productMap.get(item.productId);
+
+      const unitCostPrice = product?.costPrice ? Number(product.costPrice) : 0;
+
+      const totalAmount = (item.unitPrice || 0) * item.quantity;
+      const totalCost = unitCostPrice * item.quantity;
+
+      const data: CreateTransactionData = {
+        customerId: body.customerId ? body.customerId : customer.id,
+        type: TransactionType.RENT,
+        startDate,
+        expectedReturnDate,
+        createdBy: user?.id,
+        items: [
+          {
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice || 0,
+            unitCostPrice,
+          },
+        ],
+        totalAmount,
+        totalCost,
+        profitLoss: totalAmount - totalCost,
+      };
+
+      const tx = await transactionService.createTransactionWithStock(data, {
+        userId: user?.id,
+        user,
+      } as any);
+
+      createdTransactions.push(tx);
+    }
+
     return ResponseUtil.created(
       res,
-      'Stock out transaction created successfully',
-      result
+      'Rental transactions created successfully',
+      createdTransactions
     );
   } catch (error) {
     console.error('Create stock out transaction error:', error);
@@ -233,6 +324,9 @@ export const updateTransaction = async (req: Request, res: Response) => {
       type: newType,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       returnDate: body.returnDate ? new Date(body.returnDate) : undefined,
+      expectedReturnDate: body.expectedReturnDate
+        ? new Date(body.expectedReturnDate)
+        : undefined,
     };
 
     // attach updatedBy from authenticated user when available

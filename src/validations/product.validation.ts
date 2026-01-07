@@ -42,9 +42,9 @@ export const createProductValidation = [
     .withMessage('Serial number must be a string'),
 
   body('warranty')
-    .optional()
+    .optional({ nullable: true })
     .isString()
-    .withMessage('Warranty must be a string'),
+    .withMessage('Warranty must be a string or null'),
 
   body('description')
     .optional()
@@ -52,7 +52,7 @@ export const createProductValidation = [
     .withMessage('Description must be a string'),
 
   body('costPrice')
-    .optional()
+    .optional({ nullable: true })
     .isFloat({ min: 0 })
     .withMessage('Cost price must be a positive number'),
 
@@ -62,6 +62,19 @@ export const createProductValidation = [
     .optional({ nullable: true })
     .isUUID()
     .withMessage('Supplier ID must be a UUID string'),
+
+  body('supplierName')
+    .optional()
+    .isString()
+    .withMessage('Supplier name must be a string')
+    .custom((value, { req }) => {
+      const body = req.body as { supplierId?: string; supplierName?: string };
+      // If supplierId is not provided, supplierName is required
+      if (!body.supplierId && !value) {
+        throw new Error('Either supplierId or supplierName must be provided');
+      }
+      return true;
+    }),
 ];
 
 export const updateProductValidation = [
@@ -121,4 +134,9 @@ export const updateProductValidation = [
     .optional({ nullable: true })
     .isUUID()
     .withMessage('Supplier ID must be a UUID string'),
+
+  body('supplierName')
+    .optional()
+    .isString()
+    .withMessage('Supplier name must be a string'),
 ];
