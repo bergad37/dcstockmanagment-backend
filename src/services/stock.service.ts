@@ -8,7 +8,10 @@ const stockInclude = {
   },
 };
 
-const base = createBaseService(prisma.stock, { idField: 'id', defaultInclude: stockInclude });
+const base = createBaseService(prisma.stock, {
+  idField: 'id',
+  defaultInclude: stockInclude,
+});
 
 export async function getAllStock(
   skip: number,
@@ -17,9 +20,10 @@ export async function getAllStock(
     searchKey?: string;
     startDate?: string;
     endDate?: string;
+    type?: string;
   }
 ) {
-  const { searchKey, startDate, endDate } = conditions || {};
+  const { searchKey, startDate, endDate, type } = conditions || {};
   const where: any = {};
 
   // Exclude stocks with zero quantity
@@ -30,21 +34,56 @@ export async function getAllStock(
   }
 
   if (startDate && endDate) {
-    where.createdAt = { gte: new Date(String(startDate)), lte: new Date(String(endDate)) };
+    where.createdAt = {
+      gte: new Date(String(startDate)),
+      lte: new Date(String(endDate)),
+    };
   }
 
-  const { items: stocks, total } = await base.list({ skip, take, where, orderBy: { createdAt: 'desc' } });
+  // 🔑 Product type handling
+  if (type) {
+    // If type is passed → use it
+    where.product = {
+      ...(where.product || {}),
+      type: type,
+    };
+  } else {
+    // If type is NOT passed → default to ITEM & QUANTITY
+    where.product = {
+      ...(where.product || {}),
+      type: { in: ['ITEM', 'QUANTITY'] },
+    };
+  }
+
+  const { items: stocks, total } = await base.list({
+    skip,
+    take,
+    where,
+    orderBy: { createdAt: 'desc' },
+  });
   return { stocks, total };
 }
 
 export async function getStockByProductId(productId: string) {
-  const stock = await prisma.stock.findUnique({ where: { productId }, include: stockInclude });
+  const stock = await prisma.stock.findUnique({
+    where: { productId },
+    include: stockInclude,
+  });
   if (!stock) throw new Error('Stock not found for this product');
   return stock;
 }
 
-export async function updateStock(id: string, data: UpdateStockData, ctx?: ServiceContext) {
-  return await base.updateById(id, data as unknown as Record<string, unknown>, undefined, ctx);
+export async function updateStock(
+  id: string,
+  data: UpdateStockData,
+  ctx?: ServiceContext
+) {
+  return await base.updateById(
+    id,
+    data as unknown as Record<string, unknown>,
+    undefined,
+    ctx
+  );
 }
 
 export async function getStockById(id: string) {

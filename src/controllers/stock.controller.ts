@@ -7,13 +7,14 @@ import { UpdateStockData, TransactionType } from '../common/types';
 
 export const getAllStock = async (req: Request, res: Response) => {
   try {
-    const { searchKey, startDate, endDate } = req.query;
+    const { searchKey, startDate, endDate, type } = req.query;
 
     const pagination = PaginationUtil.getPaginationParams(req);
     const conditions = {
       searchKey: searchKey ? String(searchKey) : undefined,
       startDate: startDate ? String(startDate) : undefined,
       endDate: endDate ? String(endDate) : undefined,
+      type: type ? String(type) : undefined,
     };
 
     const { stocks, total } = await stockService.getAllStock(
