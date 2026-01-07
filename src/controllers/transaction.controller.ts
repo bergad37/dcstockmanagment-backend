@@ -81,6 +81,25 @@ export const createTransaction = async (req: Request, res: Response) => {
 
     const itemError = validateItems(body.items);
     if (itemError) return ResponseUtil.error(res, itemError);
+
+    // For MAINTAINED/NOT_MAINTAINED, ensure all products are CALIBRATION
+    if (
+      type === TransactionType.MAINTAINED ||
+      type === TransactionType.NOT_MAINTAINED
+    ) {
+      const productIds = body.items.map((i: any) => i.productId);
+      const products = await prisma.product.findMany({
+        where: { id: { in: productIds } },
+        select: { id: true, type: true, name: true },
+      });
+      const nonCalibration = products.filter((p) => p.type !== 'CALIBRATION');
+      if (nonCalibration.length > 0) {
+        return ResponseUtil.error(
+          res,
+          `Transaction type ${type} is only allowed for CALIBRATION products. Invalid products: ${nonCalibration.map((p) => p.name).join(', ')}`
+        );
+      }
+    }
     const data: CreateTransactionData = {
       customerId: body.customerId,
       type,
@@ -114,10 +133,13 @@ export const createStockOutTransaction = async (
     const authReq = req as any;
     const user = authReq.user;
     const body = req.body;
-
     // Normalize type
     const type =
-      body.type === 'RENTED' ? TransactionType.RENT : TransactionType.SOLD;
+      body.type === 'RENTED'
+        ? TransactionType.RENT
+        : body.type
+          ? body.type
+          : TransactionType.SOLD;
 
     // Validate customer
     let customer = null;
@@ -269,7 +291,7 @@ export const createStockOutTransaction = async (
 
       const data: CreateTransactionData = {
         customerId: body.customerId ? body.customerId : customer.id,
-        type: TransactionType.RENT,
+        type,
         startDate,
         expectedReturnDate,
         createdBy: user?.id,

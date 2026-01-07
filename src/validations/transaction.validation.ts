@@ -5,8 +5,10 @@ export const createStockOutValidation = [
   body('type')
     .notEmpty()
     .withMessage('Transaction type is required')
-    .isIn(['SOLD', 'RENTED'])
-    .withMessage('Transaction type must be SOLD or RENTED'),
+    .isIn(['SOLD', 'RENTED', 'MAINTAINED', 'NOT_MAINTAINED'])
+    .withMessage(
+      'Transaction type must be SOLD, RENTED, MAINTAINED, or NOT_MAINTAINED'
+    ),
 
   // Transaction date
   body('transactionDate')
@@ -71,8 +73,10 @@ export const createStockOutValidation = [
 export const updateTransactionValidation = [
   body('type')
     .optional()
-    .isIn(['SOLD', 'RENT', 'RETURNED'])
-    .withMessage('Transaction type must be one of: SOLD, RENT, RETURNED'),
+    .isIn(['SOLD', 'RENT', 'RETURNED', 'MAINTAINED', 'NOT_MAINTAINED'])
+    .withMessage(
+      'Transaction type must be one of: SOLD, RENT, RETURNED, MAINTAINED, NOT_MAINTAINED'
+    ),
   body('customerId')
     .optional()
     .isString()

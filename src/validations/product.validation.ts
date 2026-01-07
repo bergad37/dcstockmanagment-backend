@@ -74,6 +74,26 @@ export const createProductValidation = [
         throw new Error('Either supplierId or supplierName must be provided');
       }
       return true;
+    })
+    .custom(async (value) => {
+      // Check if supplier name already exists when creating a new supplier
+      if (value) {
+        const { PrismaClient } = require('@prisma/client');
+        const prisma = new PrismaClient();
+        try {
+          const existingSupplier = await prisma.supplier.findUnique({
+            where: { name: value.trim() },
+          });
+          if (existingSupplier) {
+            throw new Error(
+              `Supplier with name "${value.trim()}" already exists`
+            );
+          }
+        } finally {
+          await prisma.$disconnect();
+        }
+      }
+      return true;
     }),
 ];
 

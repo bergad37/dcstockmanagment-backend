@@ -17,6 +17,8 @@ enum TransactionType {
   SOLD
   RETURNED
   RENT
+  MAINTAINED
+  NOT_MAINTAINED
 }
 
 enum UserRole {
@@ -50,7 +52,7 @@ model ProductCategory {
 
 model Supplier {
   id        String   @id @default(uuid())
-  name      String
+  name      String   @unique
   phone     String?
   email     String?
   products  Product[]

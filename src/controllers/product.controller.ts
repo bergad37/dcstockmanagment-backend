@@ -76,8 +76,19 @@ export const createProduct = async (req: Request, res: Response) => {
     // If supplierId is not provided but supplierName is, create the supplier
     if (!supplierId && body.supplierName) {
       try {
+        const trimmedSupplierName = body.supplierName.trim();
+        const existingSupplier =
+          await supplierService.getSupplierByName(trimmedSupplierName);
+
+        if (existingSupplier) {
+          return ResponseUtil.error(
+            res,
+            `Supplier with name "${trimmedSupplierName}" already exists. Please use the existing supplier or choose a different name.`
+          );
+        }
+
         const newSupplier = await supplierService.createSupplier(
-          { name: body.supplierName },
+          { name: trimmedSupplierName },
           { userId: user?.id, user } as any
         );
         supplierId = newSupplier.id;

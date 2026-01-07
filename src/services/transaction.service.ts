@@ -130,7 +130,12 @@ export async function createTransactionWithStock(
   data: CreateTransactionData,
   ctx?: ServiceContext
 ) {
-  const needsStock = data.type === 'RENT' || data.type === 'SOLD';
+  const needsStock =
+    data.type === 'RENT' ||
+    data.type === 'SOLD' ||
+    data.type === 'MAINTAINED' ||
+    data.type === 'NOT_MAINTAINED';
+
   const productIds = data.items.map((i) => i.productId);
 
   // Get products with stock info
@@ -154,14 +159,16 @@ export async function createTransactionWithStock(
             `Insufficient stock for product ${product.name}. Available: ${product.stock.quantity}, Requested: ${item.quantity}`
           );
         }
-      } else if (product.type === 'ITEM') {
+      } else if (product.type === 'ITEM' || product.type === 'CALIBRATION') {
         if (item.quantity !== 1) {
           throw new Error(
-            `Quantity must be 1 for item-type product: ${product.name}`
+            `Quantity must be 1 for ${product.type.toLowerCase()}-type product: ${product.name}`
           );
         }
         if (product.stock.quantity < 1) {
-          throw new Error(`Item not available in stock: ${product.name}`);
+          throw new Error(
+            `${product.type} not available in stock: ${product.name}`
+          );
         }
       }
     }
@@ -290,7 +297,10 @@ export async function updateTransactionWithStockAdjustments(
 
   if (
     existing.type === 'RETURNED' &&
-    (newType === 'RENT' || newType === 'SOLD')
+    (newType === 'RENT' ||
+      newType === 'SOLD' ||
+      newType === 'MAINTAINED' ||
+      newType === 'NOT_MAINTAINED')
   ) {
     const productIds = existing.items.map((i) => i.productId);
     const stocks = await prisma.stock.findMany({

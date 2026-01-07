@@ -25,6 +25,13 @@ export async function getSupplierById(id: string) {
   return await base.getById(id);
 }
 
+export async function getSupplierByName(name: string) {
+  return await prisma.supplier.findUnique({
+    where: { name: name.trim() },
+    include: supplierInclude,
+  });
+}
+
 export async function createSupplier(data: CreateSupplierData, ctx?: ServiceContext) {
   return await base.create(data as unknown as Record<string, unknown>, undefined, ctx);
 }
@@ -37,4 +44,4 @@ export async function deleteSupplier(id: string) {
   return await base.deleteById(id);
 }
 
-export default { getAllSuppliers, getSupplierById, createSupplier, updateSupplier, deleteSupplier };
+export default { getAllSuppliers, getSupplierById, getSupplierByName, createSupplier, updateSupplier, deleteSupplier };

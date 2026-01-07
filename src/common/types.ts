@@ -16,6 +16,8 @@ export enum TransactionType {
   SOLD = 'SOLD',
   RETURNED = 'RETURNED',
   RENT = 'RENT',
+  MAINTAINED = 'MAINTAINED',
+  NOT_MAINTAINED = 'NOT_MAINTAINED',
 }
 
 export interface AuthRequest extends Request {
