@@ -123,7 +123,7 @@ export const updateProductValidation = [
     .withMessage('Serial number must be a string'),
 
   body('warranty')
-    .optional()
+    .optional({ nullable: true })
     .isString()
     .withMessage('Warranty must be a string'),
 
@@ -133,7 +133,7 @@ export const updateProductValidation = [
     .withMessage('Description must be a string'),
 
   body('costPrice')
-    .optional()
+    .optional({ nullable: true })
     .isFloat({ min: 0 })
     .withMessage('Cost price must be a positive number'),
 
